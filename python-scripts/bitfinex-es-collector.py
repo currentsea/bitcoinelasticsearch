@@ -31,7 +31,6 @@ def getBitfinexTickerData(tickerSymbol):
 	req = requests.get(BITFINEX_API_ROOT + "/pubticker/" + tickerSymbol)
 	sleep(0.5)
 	bookReq = requests.get(BITFINEX_API_ROOT + "/book/" + tickerSymbol)
-	print bookReq.json()
 	if req.status_code < 400: 
 		tickerDict = req.json()
 		tickerDict["order_book"] = bookReq.json()
