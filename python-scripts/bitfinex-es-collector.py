@@ -14,7 +14,7 @@ ELASTICSEARCH_HOST = "http://localhost:9200"
 BITFINEX_API_ROOT = "https://api.bitfinex.com/v1"
 
 # Bitfinex API time limit in seconds 
-BITFINEX_API_TIME_LIMIT = 1
+BITFINEX_API_TIME_LIMIT = 1.5
 
 # Default index name in elasticsearch to use for the btc_usd market data aggregation
 BITFINEX_DEFAULT_TICKER_INDEX_NAME = "btcusdmarketdata"
@@ -29,8 +29,12 @@ def getArgs():
 def getBitfinexTickerData(tickerSymbol): 
 	tickerDict = None
 	req = requests.get(BITFINEX_API_ROOT + "/pubticker/" + tickerSymbol)
+	sleep(0.5)
+	bookReq = requests.get(BITFINEX_API_ROOT + "/book/" + tickerSymbol)
+	print bookReq.json()
 	if req.status_code < 400: 
 		tickerDict = req.json()
+		tickerDict["order_book"] = bookReq.json()
 	else: 
 		print("REQUEST TO BITFINEX API FAILED: status code " + str(req.status_code))
 	return tickerDict
@@ -49,7 +53,8 @@ def createMappings(es):
 		            "high": {"type": "float"},
 		            "ask": {"type": "float"},
 		            "low": {"type": "float"},
-		            "bid": {"type": "float"}
+		            "bid": {"type": "float"}, 
+		            "order_book": {"type": "object"}
 		        }
 		    }
 		}
