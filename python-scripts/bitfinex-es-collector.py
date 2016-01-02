@@ -1,3 +1,4 @@
+#!/usr/bin/python
 __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
