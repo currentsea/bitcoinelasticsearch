@@ -1,3 +1,12 @@
+# PLEASE DONATE TO KEEP PROJECT ALIVE
+
+```
+DONATE / TIP TO THIS BTC ADDRESS: 
+1KK5chYWRrNhoRdgzhR8eKmRRq7Fz5aMKC
+
+Your donation / tip is appreciated!
+```
+
 # bitcoinelasticsearch
 Bitcoin elasticsearch data harvesting tool for Bitfinex 
 
@@ -14,3 +23,4 @@ pip install requests
 ``` 
 
 Will add more to readme when im not lazy 
+

@@ -38,6 +38,16 @@ def getBitfinexTickerData(tickerSymbol):
 		print("REQUEST TO BITFINEX API FAILED: status code " + str(req.status_code))
 	return tickerDict
 
+def getOkcoinTickerData(): 
+	tickerDict = None	
+	req = requests.get("https://www.okcoin.com/api/v1/ticker.do?symbol=btc_usd")
+	if req.status_code < 400: 
+		tickerDict = req.json()
+		# tickerDict["order_book"] = bookReq.json()
+	else: 
+		print("REQUEST TO OKCOIN API FAILED: status code " + str(req.status_code))
+	return tickerDict
+
 def createMappings(es): 
 	mappingCreated = False
 	try: 
@@ -57,8 +67,23 @@ def createMappings(es):
 		        }
 		    }
 		}
+		okcoinMapping = { 
+			"okcoin": { 
+				"properties": {
+					"date": {"type":"date"}, 
+					"last": {"type": "float"}, 
+		            "buy": {"type": "float"},
+		            "high": {"type": "float"},
+		            "last": {"type": "float"},
+		            "low": {"type": "float"},
+		            "sell": {"type": "float"},
+		            "vol": {"type": "float"}
+				}
+			}
+		}
 		es.indices.create(BITFINEX_DEFAULT_TICKER_INDEX_NAME)
 		es.indices.put_mapping(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
+		es.indices.put_mapping(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		mappingCreated = True
 	except: 
 		pass
@@ -66,11 +91,10 @@ def createMappings(es):
 
 # Adds ticker item to elasticsearch 
 # Uses a random UUID as the ID, can be analyzed via the timestamp in kibana
-def addItem(es): 
+def addBitfinexItem(es): 
 	successful = False
 	try: 
 		tickerData = getBitfinexTickerData("BTCUSD")
-		esPostUrl = ELASTICSEARCH_HOST + "/BITFINEX_DEFAULT_TICKER_INDEX_NAME/btcdata/"
 		timezone = pytz.timezone('UTC')
 		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), timezone)
 		tickerData["date"] = dateQueried
@@ -80,21 +104,42 @@ def addItem(es):
 		pass
 	return successful
 
+def addOkCoinItem(es): 
+	successful = False
+	try: 
+		tickerData = getOkcoinTickerData()
+		timezone = pytz.timezone('UTC')
+		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["date"]), timezone)
+		realTickerData = tickerData["ticker"]
+		realTickerData["date"] = dateQueried
+		putNewDocumentRequest = es.create(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uuid.uuid4(),body=realTickerData)
+		successful = putNewDocumentRequest["created"]
+	except: 
+		pass
+	return successful
+
 def updateIndex(es): 
-	indexUpdated = addItem(es)
+	indexUpdated = addBitfinexItem(es)
 	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 	if indexUpdated == True: 
 		print "[" + logTime + "]: 1 document successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index." 
 	else: 
 		print "[" + logTime + "]: document failed to be successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index (API calls too frequent?)"
+
+	# TODO: FIX REDUNDANCY	
+	okcoin = addOkCoinItem(es)
+	if okcoin == True: 
+		print "[" + logTime + "]: 1 document successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index." 
+	else: 
+		print "[" + logTime + "]: document failed to be successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index (API calls too frequent?)"
+
 	sleep(BITFINEX_API_TIME_LIMIT)
 
 
 if __name__ == "__main__": 
 	args = getArgs()
 	warnings.filterwarnings("ignore")
-	print args.forever
 	es = Elasticsearch([ELASTICSEARCH_HOST])
 	mappingCreated = createMappings(es)
 	if mappingCreated == True:
