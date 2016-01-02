@@ -3,7 +3,7 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import requests, json, re, uuid, datetime, argparse, warnings
+import requests, json, re, uuid, datetime, argparse, warnings, pytz
 from elasticsearch import Elasticsearch
 from time import sleep 
 
@@ -67,7 +67,8 @@ def addItem(es):
 	try: 
 		tickerData = getBitfinexTickerData("BTCUSD")
 		esPostUrl = ELASTICSEARCH_HOST + "/BITFINEX_DEFAULT_TICKER_INDEX_NAME/btcdata/"
-		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]))
+		timezone = pytz.timezone('UTC')
+		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), timezone)
 		tickerData["date"] = dateQueried
 		putNewDocumentRequest = es.create(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type='bitfinex', ignore=[400], id=uuid.uuid4(),body=tickerData)
 		successful = putNewDocumentRequest["created"]
@@ -78,6 +79,7 @@ def addItem(es):
 def updateIndex(es): 
 	indexUpdated = addItem(es)
 	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 	if indexUpdated == True: 
 		print "[" + logTime + "]: 1 document successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index." 
 	else: 
