@@ -2,9 +2,9 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import requests, json, re, uuid, datetime, argparse
+import requests, json, re, uuid, datetime, argparse, warnings
 from elasticsearch import Elasticsearch
-from time import sleep 
+from time import slceep 
 
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
@@ -86,6 +86,7 @@ def updateIndex(es):
 
 if __name__ == "__main__": 
 	args = getArgs()
+	warnings.filterwarnings("ignore")
 	print args.forever
 	es = Elasticsearch([ELASTICSEARCH_HOST])
 	mappingCreated = createMappings(es)
@@ -107,5 +108,5 @@ if __name__ == "__main__":
 		counter = 0
 		while counter != maxRecords: 
 			updateIndex(es)
-
+			counter = counter + 1
 
