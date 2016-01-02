@@ -53,7 +53,7 @@ def createMappings(es):
 		            "ask": {"type": "float"},
 		            "low": {"type": "float"},
 		            "bid": {"type": "float"}, 
-		            "order_book": {"type": "object"}
+		            "order_book": {"type": "nested"}
 		        }
 		    }
 		}
