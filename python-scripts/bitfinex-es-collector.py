@@ -4,7 +4,7 @@ __license__ = "MIT"
 
 import requests, json, re, uuid, datetime, argparse, warnings
 from elasticsearch import Elasticsearch
-from time import slceep 
+from time import sleep 
 
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
