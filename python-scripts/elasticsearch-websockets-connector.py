@@ -71,7 +71,6 @@ def on_message(self, event):
     doit(okcoinData)
 
 def doit(data): 
-	print("*********~*~**~*~*******")
 	tempData = data
 	dataStr = tempData.decode(encoding='UTF-8')
 
@@ -82,23 +81,15 @@ def doit(data):
 		processTickerData(dataItem)
 
 	uniqueIdentifier = uuid.uuid4()
-	print("\t---")
-	print("\t---\n")
-	print("*********~*~**~*~*******")
-	print(data)
+
+	return data
 
 def processTickerData(item): 
-	print(len(item))
-
 	itemDict = dict(item)
-
 	okCoinDto = {}
-
 	okCoinTimestamp = itemDict["timestamp"]
 	uniqueId = uuid.uuid4()
-
 	dateRecv = datetime.datetime.fromtimestamp((float(okCoinTimestamp) / 1000), TIMEZONE)
-
 	volume = itemDict["vol"]
 	volume = volume.replace(",", "") 
 
