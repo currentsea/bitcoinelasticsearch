@@ -26,10 +26,10 @@ TIMEZONE = pytz.timezone('UTC')
 BITFINEX_BTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/BTCUSD"
 
 # REST API URL for Bitfinex US Dollars to Litecoin (LTCUSD) Public Ticker
-BITFINEX_lTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCUSD"
+BITFINEX_LTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCUSD"
 
 
-BITFINEX_BTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCBTC"
+BITFINEX_LTCBTC_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCBTC"
 
 # REST API URL Root For Okcoin
 OKCOIN_REST_API_URL = "https://www.okcoin.com/api/v1" 
@@ -104,12 +104,8 @@ def addBitfinexItem(es):
 	successful = False
 	try: 
 		tickerData = getTickerData(BITFINEX_BTCUSD_TICKER_REST_URL) 
-		
-
-
 		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), TIMEZONE)
 		uniqueIdentifier = uuid.uuid4()
-
 		tickerData["uuid"] = str(uniqueIdentifier)
 		tickerData["date"] = dateQueried
 
@@ -147,7 +143,6 @@ def addOkCoinItem(es):
 
 
 	# TODO: compound order book info here 
-
 
 
 	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinDto) 
