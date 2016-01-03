@@ -6,12 +6,16 @@
 # import websockets, time, sys, json, hashlib, zlib, base64, argparse, asyncio
 # from ws4py.client.threadedclient import WebSocketClient
 
-import websocket, time, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse
+import websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz
 
 # BITFINEX_WEBSOCKET_URL = "wss://api2.bitfinex.com:3000/ws"
 OKCOIN_WEBSOCKET_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
 # OKCOIN_API_KEY = ""
 # OKCOIN_API_SECRET = ""
+
+# UTC ALL THE TIME, FOREVER AND EVER. 
+TIMEZONE = pytz.timezone('UTC')
+
 
 def on_open(self):
     self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary':'true'}")
@@ -21,7 +25,53 @@ def on_message(self, event):
     doit(okcoinData)
 
 def doit(data): 
+	print("*********~*~**~*~*******")
+	tempData = data
+	dataStr = tempData.decode(encoding='UTF-8')
+
+
+	jsonData =json.loads(dataStr)
+	for item in jsonData: 
+		dataItem = item["data"]
+		processTickerData(dataItem)
+
+	uniqueIdentifier = uuid.uuid4()
+	# for dataPoint in jsonData: 
+	# 	okcoinDto = {}
+	# 	dataJson = dataPoint["data"]
+	# 	okCoinTimestamp = dataJson["timestamp"] 
+	# 	# print(okCoinTimestamp)
+	# 	# dateRecv = datetime.datetime.fromtimestamp(float(okCoinTimestamp))
+	# 	# print(dateRecv)
+	# 	okcoinDto = {}
+	# 	okcoinDto["uuid"] = uniqueIdentifier
+	# 	# okcoinDto["date"] = dateRecv
+	# 	okCoinDto["timestamp"] = str(okCoinTimestamp)
+	# 	okCoinDto["last_price"] = float(dataJson["last"])
+	# 	okCoinDto["volume"] = float(dataJson["vol"]) 
+	# 	okCoinDto["high"] = float(dataJson["high"])
+	# 	okCoinDto["ask"] = float(dataJson["sell"]) 
+	# 	okCoinDto["low"] = float(dataJson["low"]) 
+	# 	okCoinDto["bid"] = float(dataJson["buy"])
+	# 	print("\t---")
+	# 	print(okcoinDto)
+	# 	print("\t---")
+
+	print("\t---")
+	print("\t---\n")
+	print("*********~*~**~*~*******")
 	print(data)
+
+def processTickerData(item): 
+	print(len(item))
+
+	itemDict = dict(item)
+	print(itemDict["high"])
+
+	# for curField in item: 
+	# 	print(curField[0]) 
+	# 	print(curField[1])
+	return item
 
 def inflate(okcoinData):
     decompressedData = zlib.decompressobj(
@@ -35,7 +85,7 @@ def on_error(self, event):
     print (event)
 
 def on_close(self, event):
-    print ('DISCONNECTED FROM OKCOIN FEED')
+    print (event)
 
 if __name__ == "__main__":
     
