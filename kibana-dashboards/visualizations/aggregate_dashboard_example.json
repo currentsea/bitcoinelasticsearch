@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "aggregate_dashboard_sample",
+    "_type": "dashboard",
+    "_source": {
+      "title": "aggregate_dashboard_sample",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"col\":5,\"id\":\"15_minutes_average_last_price\",\"row\":5,\"size_x\":4,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"15_minutes_highest_last_price\",\"row\":5,\"size_x\":4,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"15_minutes_lowest_last_price\",\"row\":5,\"size_x\":4,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"15_minutes_aggregated_price_metrics_table_okcoin_bitfinex\",\"row\":7,\"size_x\":12,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"15minutes_okcoin_vs_bitfinex_volume_comparison\",\"row\":1,\"size_x\":4,\"size_y\":4,\"type\":\"visualization\"},{\"col\":5,\"id\":\"Bitfinex-to-OkCoin-last_price,-ask,-ampersand-bid-comparison-chart-Last-15-Minutes-charts-are-updated-every-5-seconds\",\"row\":1,\"size_x\":8,\"size_y\":4,\"type\":\"visualization\"}]",
+      "version": 1,
+      "timeRestore": true,
+      "timeTo": "now",
+      "timeFrom": "now-15m/m",
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+      }
+    }
+  }
+]
