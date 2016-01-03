@@ -118,37 +118,38 @@ def addBitfinexItem(es):
 	return successful
 
 def addOkCoinItem(es): 
+	
 	successful = False
-	# try: 
-	tickerData = getTickerData(OKCOIN_BTCUSD_TICKER_REST_URL)
-	okCoinTimestamp = tickerData["date"]
-	okCoinTickerData = tickerData["ticker"]
+	try: 
+		tickerData = getTickerData(OKCOIN_BTCUSD_TICKER_REST_URL)
+		okCoinTimestamp = tickerData["date"]
+		okCoinTickerData = tickerData["ticker"]
 
-	dateQueried = datetime.datetime.fromtimestamp(float(okCoinTimestamp), TIMEZONE)
-
-
-	uniqueIdentifier = uuid.uuid4()
-	okCoinDto = {}
+		dateQueried = datetime.datetime.fromtimestamp(float(okCoinTimestamp), TIMEZONE)
 
 
-	okCoinDto["uuid"] = str(uniqueIdentifier)
-	okCoinDto["date"] = dateQueried
-	okCoinDto["timestamp"] = str(okCoinTimestamp)
-	okCoinDto["last_price"] = float(okCoinTickerData["last"])
-	okCoinDto["volume"] = float(okCoinTickerData["vol"]) 
-	okCoinDto["high"] = float(okCoinTickerData["high"])
-	okCoinDto["ask"] = float(okCoinTickerData["sell"]) 
-	okCoinDto["low"] = float(okCoinTickerData["low"]) 
-	okCoinDto["bid"] = float(okCoinTickerData["buy"])
+		uniqueIdentifier = uuid.uuid4()
+		okCoinDto = {}
 
 
-	# TODO: compound order book info here 
+		okCoinDto["uuid"] = str(uniqueIdentifier)
+		okCoinDto["date"] = dateQueried
+		okCoinDto["timestamp"] = str(okCoinTimestamp)
+		okCoinDto["last_price"] = float(okCoinTickerData["last"])
+		okCoinDto["volume"] = float(okCoinTickerData["vol"]) 
+		okCoinDto["high"] = float(okCoinTickerData["high"])
+		okCoinDto["ask"] = float(okCoinTickerData["sell"]) 
+		okCoinDto["low"] = float(okCoinTickerData["low"]) 
+		okCoinDto["bid"] = float(okCoinTickerData["buy"])
 
 
-	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinDto) 
-	successful = putNewDocumentRequest["created"]
-	# except: 
-	# 	pass
+		# TODO: compound order book info here 
+
+
+		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinDto) 
+		successful = putNewDocumentRequest["created"]
+	except: 
+		pass
 	return successful
 
 def updateIndex(es): 
