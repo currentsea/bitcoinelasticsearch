@@ -7,6 +7,7 @@
 ```
 
 # bitcoinelasticsearch
+# Bitcoin Elasticsearch connector 
 Bitcoin elasticsearch data harvesting tool for Bitfinex, Okcoin, and many more to come :)  
 
 
