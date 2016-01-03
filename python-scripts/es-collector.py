@@ -67,10 +67,13 @@ def createMappings(es):
 					"last_price": {"type": "float"},
 					"timestamp": {"type": "string", "index": "no"},
 					"volume": {"type": "float"},
-					"mid": {"type": "float"},
 					"high": {"type": "float"},
 					"ask": {"type": "float"},
 					"low": {"type": "float"},
+					"dailyChange": {"type": "float"}, 
+					"dailyDelta": {"type" : "float"}, 
+					"askVolume": {"type": "float"}, 
+					"bidVolume": {"type": "float"},
 					"bid": {"type": "float"}
 				}
 			}
