@@ -10,42 +10,52 @@ from time import sleep
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
 
-# Root URL that the bitfinex API uses (most likely wont change until (if ever) a /v2/../vN/ are released)
-BITFINEX_API_ROOT = "https://api.bitfinex.com/v1"
 
 # Bitfinex API time limit in seconds 
-BITFINEX_API_TIME_LIMIT = 1
+API_TIME_LIMIT = 1
 
 # Default index name in elasticsearch to use for the btc_usd market data aggregation
-BITFINEX_DEFAULT_TICKER_INDEX_NAME = "btcusdmarketdata"
+DEFAULT_INDEX_NAME = "btcusdmarketdata"
+
+# REST API URL for Bitfinex
+BITFINEX_REST_API_URL = "https://api.bitfinex.com/v1"
+
+# UTC ALL THE TIME, FOREVER AND EVER. 
+TIMEZONE = pytz.timezone('UTC')
+
+
+# REST API URL for Bitfinex US Dollars to Bitcoin (BTCUSD) Public Ticker
+BITFINEX_BTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/BTCUSD"
+
+# REST API URL for Bitfinex US Dollars to Litecoin (LTCUSD) Public Ticker
+BITFINEX_lTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCUSD"
+
+
+BITFINEX_BTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/LTCBTC"
+
+# REST API URL Root For Okcoin
+OKCOIN_REST_API_URL = "https://www.okcoin.com/api/v1" 
+
+# REST API URL for OkCoin Public Bitcoin (BTCUSD) Ticker
+OKCOIN_BTCUSD_TICKER_REST_URL = OKCOIN_REST_API_URL + "/ticker.do?symbol=btc_usd"
 
 def getArgs(): 
 	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
 	parser.add_argument('--forever', action='store_true', default=False)
 	parser.add_argument('--max_records', action='store_true', default=3600)
+
+	# TODO: add more params here
+
 	args = parser.parse_args()
 	return args
 
-def getBitfinexTickerData(tickerSymbol): 
-	tickerDict = None
-	req = requests.get(BITFINEX_API_ROOT + "/pubticker/" + tickerSymbol)
-	# sleep(0.5)
-	# bookReq = requests.get(BITFINEX_API_ROOT + "/book/" + tickerSymbol)
-	if req.status_code < 400: 
-		tickerDict = req.json()
-		# tickerDict["order_book"] = bookReq.json()
-	else: 
-		print("REQUEST TO BITFINEX API FAILED: status code " + str(req.status_code))
-	return tickerDict
-
-def getOkcoinTickerData(): 
+def getTickerData(tickerUrl): 
 	tickerDict = None	
-	req = requests.get("https://www.okcoin.com/api/v1/ticker.do?symbol=btc_usd")
+	req = requests.get(tickerUrl)
 	if req.status_code < 400: 
 		tickerDict = req.json()
-		# tickerDict["order_book"] = bookReq.json()
 	else: 
-		print("REQUEST TO OKCOIN API FAILED: status code " + str(req.status_code))
+		print("REQUEST TO A TICKER API FAILED (" + tickerUrl + "): status code " + str(req.status_code))
 	return tickerDict
 
 def createMappings(es): 
@@ -54,36 +64,37 @@ def createMappings(es):
 		bitfinexMapping = {
 		    "bitfinex": {
 		        "properties": {
+					"uuid": { "type": "string", "index": "no"}, 
 		            "date": {"type": "date"},
 		            "last_price": {"type": "float"},
-		            "timestamp": {"type": "string", "index": "not_analyzed"},
+		            "timestamp": {"type": "string", "index": "no"},
 		            "volume": {"type": "float"},
 		            "mid": {"type": "float"},
 		            "high": {"type": "float"},
 		            "ask": {"type": "float"},
 		            "low": {"type": "float"},
 		            "bid": {"type": "float"}
-		            # "order_book": {"type": "nested"}
 		        }
 		    }
 		}
 		okcoinMapping = { 
 			"okcoin": { 
 				"properties": {
+					"uuid": { "type": "string", "index": "no"}, 
 					"date": {"type":"date"}, 
-					"last": {"type": "float"}, 
-		            "buy": {"type": "float"},
+					"last_price": {"type": "float"}, 
+					"timestamp": {"type": "string", "index": "no"},
+		            "volume": {"type": "float"},
 		            "high": {"type": "float"},
-		            "last": {"type": "float"},
+		            "ask": {"type": "float"},
 		            "low": {"type": "float"},
-		            "sell": {"type": "float"},
-		            "vol": {"type": "float"}
+		            "bid": {"type": "float"}
 				}
 			}
 		}
-		es.indices.create(BITFINEX_DEFAULT_TICKER_INDEX_NAME)
-		es.indices.put_mapping(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
-		es.indices.put_mapping(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
+		es.indices.create(DEFAULT_INDEX_NAME)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		mappingCreated = True
 	except: 
 		pass
@@ -94,11 +105,19 @@ def createMappings(es):
 def addBitfinexItem(es): 
 	successful = False
 	try: 
-		tickerData = getBitfinexTickerData("BTCUSD")
-		timezone = pytz.timezone('UTC')
-		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), timezone)
+		tickerData = getTickerData(BITFINEX_BTCUSD_TICKER_REST_URL) 
+		
+
+
+		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), TIMEZONE)
+		uniqueIdentifier = uuid.uuid4()
+
+		tickerData["uuid"] = str(uniqueIdentifier)
 		tickerData["date"] = dateQueried
-		putNewDocumentRequest = es.create(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type='bitfinex', ignore=[400], id=uuid.uuid4(),body=tickerData)
+
+		# TODO: compound order book info here 
+
+		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex', ignore=[400], id=uniqueIdentifier, body=tickerData)
 		successful = putNewDocumentRequest["created"]
 	except: 
 		pass
@@ -106,47 +125,68 @@ def addBitfinexItem(es):
 
 def addOkCoinItem(es): 
 	successful = False
-	try: 
-		tickerData = getOkcoinTickerData()
-		timezone = pytz.timezone('UTC')
-		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["date"]), timezone)
-		realTickerData = tickerData["ticker"]
-		realTickerData["date"] = dateQueried
-		putNewDocumentRequest = es.create(index=BITFINEX_DEFAULT_TICKER_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uuid.uuid4(),body=realTickerData)
-		successful = putNewDocumentRequest["created"]
-	except: 
-		pass
+	# try: 
+	tickerData = getTickerData(OKCOIN_BTCUSD_TICKER_REST_URL)
+	okCoinTimestamp = tickerData["date"]
+	okCoinTickerData = tickerData["ticker"]
+
+	dateQueried = datetime.datetime.fromtimestamp(float(okCoinTimestamp), TIMEZONE)
+
+
+	uniqueIdentifier = uuid.uuid4()
+	okCoinDto = {}
+
+
+	okCoinDto["uuid"] = str(uniqueIdentifier)
+	okCoinDto["date"] = dateQueried
+	okCoinDto["timestamp"] = str(okCoinTimestamp)
+	okCoinDto["last_price"] = float(okCoinTickerData["last"])
+	okCoinDto["volume"] = float(okCoinTickerData["vol"]) 
+	okCoinDto["high"] = float(okCoinTickerData["high"])
+	okCoinDto["ask"] = float(okCoinTickerData["sell"]) 
+	okCoinDto["low"] = float(okCoinTickerData["low"]) 
+	okCoinDto["bid"] = float(okCoinTickerData["buy"])
+
+
+	# TODO: compound order book info here 
+
+
+
+	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinDto) 
+	successful = putNewDocumentRequest["created"]
+	# except: 
+	# 	pass
 	return successful
 
 def updateIndex(es): 
-	indexUpdated = addBitfinexItem(es)
+	bitfinexUpdateRequestResult = addBitfinexItem(es)
+	okcoinUpdateRequestResult = addOkCoinItem(es)
+	logResult(bitfinexUpdateRequestResult)
+	logResult(okcoinUpdateRequestResult)
+	sleep(API_TIME_LIMIT)
+	pass 
+
+
+def logResult(successful): 
 	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-	if indexUpdated == True: 
-		print "[" + logTime + "]: 1 document successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index." 
+	if successful == True: 
+		print("[" + logTime + "]: 1 document successfully added to the " + DEFAULT_INDEX_NAME + " index.") 
 	else: 
-		print "[" + logTime + "]: document failed to be successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index (API calls too frequent?)"
-
-	# TODO: FIX REDUNDANCY	
-	okcoin = addOkCoinItem(es)
-	if okcoin == True: 
-		print "[" + logTime + "]: 1 document successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index." 
-	else: 
-		print "[" + logTime + "]: document failed to be successfully added to the " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " index (API calls too frequent?)"
-
-	sleep(BITFINEX_API_TIME_LIMIT)
-
+		print("[" + logTime + "]: document failed to be successfully added to the " + DEFAULT_INDEX_NAME + " index (API calls too frequent?)")
+	pass 
 
 if __name__ == "__main__": 
 	args = getArgs()
 	warnings.filterwarnings("ignore")
 	es = Elasticsearch([ELASTICSEARCH_HOST])
 	mappingCreated = createMappings(es)
+
+	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	if mappingCreated == True:
-		print "Created ES Mapping " + BITFINEX_DEFAULT_TICKER_INDEX_NAME + " \n Begin data collection..."
- 	else: 
-		print "Elasticsearch mapping already existed.  \nContinuing data collection..."
-	
+		print("[" + logTime + "]: Created ES Mapping " + DEFAULT_INDEX_NAME + " \n Begin data collection...")
+	else: 
+		print("[" + logTime + "]: Elasticsearch mapping already existed.  \nContinuing data collection...")
+
 	if args.forever == True: 
 		while 1 == 1: 
 			updateIndex(es)
