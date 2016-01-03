@@ -10,19 +10,17 @@ from time import sleep
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
 
-
 # Bitfinex API time limit in seconds 
 API_TIME_LIMIT = 1
 
 # Default index name in elasticsearch to use for the btc_usd market data aggregation
-DEFAULT_INDEX_NAME = "btcusdmarketdata"
+DEFAULT_INDEX_NAME = "btctickerarchive"
 
 # REST API URL for Bitfinex
 BITFINEX_REST_API_URL = "https://api.bitfinex.com/v1"
 
 # UTC ALL THE TIME, FOREVER AND EVER. 
 TIMEZONE = pytz.timezone('UTC')
-
 
 # REST API URL for Bitfinex US Dollars to Bitcoin (BTCUSD) Public Ticker
 BITFINEX_BTCUSD_TICKER_REST_URL = BITFINEX_REST_API_URL + "/pubticker/BTCUSD"
