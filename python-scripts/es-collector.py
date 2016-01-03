@@ -51,7 +51,7 @@ def getArgs():
 
 def getTickerData(tickerUrl): 
 	tickerDict = None	
-	req = requests.get("https://www.okcoin.com/api/v1/ticker.do?symbol=btc_usd")
+	req = requests.get(tickerUrl)
 	if req.status_code < 400: 
 		tickerDict = req.json()
 	else: 
@@ -85,7 +85,6 @@ def createMappings(es):
 					"last_price": {"type": "float"}, 
 					"timestamp": {"type": "string", "index": "no"},
 		            "volume": {"type": "float"},
-		            "mid": {"type": "float"},
 		            "high": {"type": "float"},
 		            "ask": {"type": "float"},
 		            "low": {"type": "float"},
@@ -113,7 +112,7 @@ def addBitfinexItem(es):
 		dateQueried = datetime.datetime.fromtimestamp(float(tickerData["timestamp"]), TIMEZONE)
 		uniqueIdentifier = uuid.uuid4()
 
-		tickerData["uuid"] = uniqueIdentifier
+		tickerData["uuid"] = str(uniqueIdentifier)
 		tickerData["date"] = dateQueried
 
 		# TODO: compound order book info here 
@@ -126,39 +125,37 @@ def addBitfinexItem(es):
 
 def addOkCoinItem(es): 
 	successful = False
-	try: 
-		tickerData = getTickerData(OKCOIN_BTCUSD_TICKER_REST_URL)
-		okCoinTimestamp = tickerData["date"]
-		okCoinTickerData = tickerData["ticker"]
+	# try: 
+	tickerData = getTickerData(OKCOIN_BTCUSD_TICKER_REST_URL)
+	okCoinTimestamp = tickerData["date"]
+	okCoinTickerData = tickerData["ticker"]
 
-		dateQueried = datetime.datetime.fromtimestamp(float(okCoinTimestamp), TIMEZONE)
-
-
-		uniqueIdentifier = uuid.uuid4()
-		okCoinDto = {}
+	dateQueried = datetime.datetime.fromtimestamp(float(okCoinTimestamp), TIMEZONE)
 
 
-		okCoinDto["uuid"] = uniqueIdentifier
-		okCoinDto["date"] = dateQueried
-		okCoinDto["timestamp"] = okCoinTimestamp
-		okCoinDto["last_price"] = okCoinTickerData["last"] 
-		okCoinDto["volume"] = okCoinTickerData["vol"] 
-		okCoinDto["mid"] = okCoinTickerData["mid"] 
-		okCoinDto["high"] = okCoinTickerData["high"]
-		okCoinDto["ask"] = okCoinTickerData["sell"] 
-		okCoinDto["low"] = okCoinTickerData["low"] 
-		okCoinDto["bid"] = okCoinTickerData["buy"]
+	uniqueIdentifier = uuid.uuid4()
+	okCoinDto = {}
 
 
+	okCoinDto["uuid"] = str(uniqueIdentifier)
+	okCoinDto["date"] = dateQueried
+	okCoinDto["timestamp"] = str(okCoinTimestamp)
+	okCoinDto["last_price"] = float(okCoinTickerData["last"])
+	okCoinDto["volume"] = float(okCoinTickerData["vol"]) 
+	okCoinDto["high"] = float(okCoinTickerData["high"])
+	okCoinDto["ask"] = float(okCoinTickerData["sell"]) 
+	okCoinDto["low"] = float(okCoinTickerData["low"]) 
+	okCoinDto["bid"] = float(okCoinTickerData["buy"])
 
-		# TODO: compound order book info here 
+
+	# TODO: compound order book info here 
 
 
 
-		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinTickerData)
-		successful = putNewDocumentRequest["created"]
-	except: 
-		pass
+	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueIdentifier, body=okCoinDto) 
+	successful = putNewDocumentRequest["created"]
+	# except: 
+	# 	pass
 	return successful
 
 def updateIndex(es): 
@@ -187,9 +184,9 @@ if __name__ == "__main__":
 	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	if mappingCreated == True:
 		print("[" + logTime + "]: Created ES Mapping " + DEFAULT_INDEX_NAME + " \n Begin data collection...")
- 	else: 
+	else: 
 		print("[" + logTime + "]: Elasticsearch mapping already existed.  \nContinuing data collection...")
-	
+
 	if args.forever == True: 
 		while 1 == 1: 
 			updateIndex(es)
