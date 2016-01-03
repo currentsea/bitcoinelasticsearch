@@ -60,20 +60,20 @@ def createMappings(es):
 	mappingCreated = False
 	try: 
 		bitfinexMapping = {
-		    "bitfinex": {
-		        "properties": {
+			"bitfinex": {
+				"properties": {
 					"uuid": { "type": "string", "index": "no"}, 
-		            "date": {"type": "date"},
-		            "last_price": {"type": "float"},
-		            "timestamp": {"type": "string", "index": "no"},
-		            "volume": {"type": "float"},
-		            "mid": {"type": "float"},
-		            "high": {"type": "float"},
-		            "ask": {"type": "float"},
-		            "low": {"type": "float"},
-		            "bid": {"type": "float"}
-		        }
-		    }
+					"date": {"type": "date"},
+					"last_price": {"type": "float"},
+					"timestamp": {"type": "string", "index": "no"},
+					"volume": {"type": "float"},
+					"mid": {"type": "float"},
+					"high": {"type": "float"},
+					"ask": {"type": "float"},
+					"low": {"type": "float"},
+					"bid": {"type": "float"}
+				}
+			}
 		}
 		okcoinMapping = { 
 			"okcoin": { 
@@ -82,11 +82,11 @@ def createMappings(es):
 					"date": {"type":"date"}, 
 					"last_price": {"type": "float"}, 
 					"timestamp": {"type": "string", "index": "no"},
-		            "volume": {"type": "float"},
-		            "high": {"type": "float"},
-		            "ask": {"type": "float"},
-		            "low": {"type": "float"},
-		            "bid": {"type": "float"}
+					"volume": {"type": "float"},
+					"high": {"type": "float"},
+					"ask": {"type": "float"},
+					"low": {"type": "float"},
+					"bid": {"type": "float"}
 				}
 			}
 		}

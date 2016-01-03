@@ -19,14 +19,19 @@ Requirements:
 ```
 pip install elasticsearch
 pip install requests
+pip install argparse
 
 (if you are using the websocket script) 
 
 ## YOU NEED TO USE PYTHON3 FOR THE WEBSOCKET SCRIPT ##
 
 pip3 install pytz
-pip3 install websocket
+
+GET THE WEBSOCKET DEPENDENCY FROM OKCOIN (** NOT THE WEBSOCKET(S) [plural]) 
+https://github.com/OKCoin/websocket/tree/master/python/websocket
+
 pip3 install requests 
+pip3 install argparse
 ``` 
 
 Will add more to readme when im not lazy 
