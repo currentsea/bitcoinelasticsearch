@@ -21,6 +21,8 @@ es = None
 
 ## TODO: RESTRUCTURE THIS INTO MORE MEANINGFUL CLASSES
 
+
+## TODO: Reduce redundancy here for mappings
 def createMappings(es): 
 	mappingCreated = False
 	try: 
@@ -32,10 +34,13 @@ def createMappings(es):
 					"last_price": {"type": "float"},
 					"timestamp": {"type": "string", "index": "no"},
 					"volume": {"type": "float"},
-					"mid": {"type": "float"},
 					"high": {"type": "float"},
 					"ask": {"type": "float"},
 					"low": {"type": "float"},
+					"dailyChange": {"type": "float"}, 
+					"dailyDelta": {"type" : "float"}, 
+					"askVolume": {"type": "float"}, 
+					"bidVolume": {"type": "float"},
 					"bid": {"type": "float"}
 				}
 			}
@@ -55,9 +60,34 @@ def createMappings(es):
 				}
 			}
 		}
+		bitfinexOrderBookMapping = { 
+			"bitfinex_order_book": { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no"}, 
+					"date": {"type":"date"}, 
+					"orders" : { 
+		                "type" : "nested",
+		                "properties": { 
+							"price": { "type": "float"},
+							"count": {"type": "float"}, 
+							"amount": {"type": "float"} 
+		                }
+					}
+					# "largest_bid_order_weighted_by_volume"
+					# "largest_ask_order_weighted_by_volume"
+					# "largest_order_by_volume" 
+					# "standard_deviation_orders"
+					# "new_order_delta"
+
+				}
+
+			}
+		} 
 		es.indices.create(DEFAULT_INDEX_NAME)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
+
 		mappingCreated = True
 	except: 
 		pass
@@ -68,20 +98,16 @@ def on_open(self):
 
 def on_message(self, event):
     okcoinData = inflate(event) #data decompress
-    doit(okcoinData)
+    injectTickerData(okcoinData)
 
-def doit(data): 
+def injectTickerData(data): 
 	tempData = data
 	dataStr = tempData.decode(encoding='UTF-8')
-
-
 	jsonData =json.loads(dataStr)
 	for item in jsonData: 
 		dataItem = item["data"]
 		processTickerData(dataItem)
-
 	uniqueIdentifier = uuid.uuid4()
-
 	return data
 
 def processTickerData(item): 
@@ -92,22 +118,11 @@ def processTickerData(item):
 	dateRecv = datetime.datetime.fromtimestamp((float(okCoinTimestamp) / 1000), TIMEZONE)
 	volume = itemDict["vol"]
 	volume = volume.replace(",", "") 
-
 	lastPrice = itemDict["last"]
-	# lastPrice = lastPrice.replace(",", "")
-
 	highPrice = itemDict["high"]
-	# highPrice = highPrice.replace(",", "") 
-	
 	askPrice = itemDict["sell"]
-	# askPrice = askPrice.replace(",", "") 
-
 	lowPrice = itemDict["low"]
-	# lowPrice = lowPrice.replace(",", "")
-
 	bidPrice = itemDict["buy"]
-	# bidPrice = bidPrice.replace(",", "")
-
 	okCoinDto["uuid"] = str(uniqueId)
 	okCoinDto["date"] = dateRecv
 	okCoinDto["timestamp"] = str(okCoinTimestamp)
@@ -123,10 +138,6 @@ def processTickerData(item):
 		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER")
 	else: 
 		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
-
-
-	print(okCoinDto)
-
 	return item
 
 def inflate(okcoinData):
