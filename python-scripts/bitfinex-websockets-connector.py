@@ -15,6 +15,7 @@ TIMEZONE = pytz.timezone('UTC')
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
 
+## TODO: Reduce redundancy here for mappings
 def createMappings(es): 
 	mappingCreated = False
 	try: 
@@ -61,8 +62,33 @@ def createMappings(es):
 		                "type" : "nested",
 		                "properties": { 
 							"price": { "type": "float"},
+							"amount": {"type": "float"}, 
 							"count": {"type": "float"}, 
-							"amount": {"type": "float"} 
+							"order_type": {"type": "string"} 
+		                }
+					}
+					# "largest_bid_order_weighted_by_volume"
+					# "largest_ask_order_weighted_by_volume"
+					# "largest_order_by_volume" 
+					# "standard_deviation_orders"
+					# "new_order_delta"
+
+				}
+
+			}
+		} 
+
+		okcoinOrderBookMapping = { 
+			"okcoin_order_book": { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no"}, 
+					"date": {"type":"date"}, 
+					"orders" : { 
+		                "type" : "nested",
+		                "properties": { 
+							"price": { "type": "float"},
+							"amount": {"type": "float"}, 
+							"order_type" : { "type": "string"} 
 		                }
 					}
 					# "largest_bid_order_weighted_by_volume"
@@ -79,11 +105,13 @@ def createMappings(es):
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
 
 		mappingCreated = True
 	except: 
 		pass
 	return mappingCreated
+
 
 def injectOrderBlock(orderbook, es, recordDate, uniqueId): 
 	for item in orderbook: 
@@ -95,7 +123,18 @@ def injectOrderBlock(orderbook, es, recordDate, uniqueId):
 		theCount = item[1]
 		orderDto["count"] = float(theCount)
 		theAmount = item[2] 
+
+		theAmount = float(theAmount) 
+
+		if theAmount < 0: 
+			orderDto["order_type"] = "ASK"
+		else: 
+			orderDto["order_type"] = "BID" 
+			
 		orderDto["amount"] = float(theAmount)
+
+
+
 		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_order_book', ignore=[400], id=uuid.uuid4(), body=orderDto)
 		successful = putNewDocumentRequest["created"]
 		if successful == True: 
