@@ -69,8 +69,32 @@ def createMappings(es):
 		                "type" : "nested",
 		                "properties": { 
 							"price": { "type": "float"},
-							"count": {"type": "float"}, 
+							"count": { "type" : "float" },
 							"amount": {"type": "float"} 
+		                }
+					}
+					# "largest_bid_order_weighted_by_volume"
+					# "largest_ask_order_weighted_by_volume"
+					# "largest_order_by_volume" 
+					# "standard_deviation_orders"
+					# "new_order_delta"
+
+				}
+
+			}
+		} 
+
+		okcoinOrderBookMapping = { 
+			"okcoin_order_book": { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no"}, 
+					"date": {"type":"date"}, 
+					"orders" : { 
+		                "type" : "nested",
+		                "properties": { 
+							"price": { "type": "float"},
+							"amount": {"type": "float"}, 
+							"order_type" : { "type": "string"} 
 		                }
 					}
 					# "largest_bid_order_weighted_by_volume"
@@ -87,18 +111,70 @@ def createMappings(es):
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
 
 		mappingCreated = True
 	except: 
 		pass
 	return mappingCreated
 
+def getJsonData(okcoinData):
+	tempData = okcoinData
+	dataStr = tempData.decode(encoding='UTF-8')
+	jsonData =json.loads(dataStr)
+	return jsonData
+
 def on_open(self):
     self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary':'true'}")
+    self.send("{'event':'addChannel','channel':'ok_btcusd_depth'}")
 
 def on_message(self, event):
-    okcoinData = inflate(event) #data decompress
-    injectTickerData(okcoinData)
+	okcoinData = inflate(event) #data decompress
+	jsonData = getJsonData(okcoinData)
+	curChannel = jsonData[0]["channel"]
+	if curChannel == "ok_btcusd_ticker": 
+		injectTickerData(okcoinData)
+	elif curChannel == "ok_btcusd_depth": 
+		processOrderbook(okcoinData) 
+
+def processOrderbook(okcoinData): 
+	jsonData = getJsonData(okcoinData) 
+	
+	for jsonItem in jsonData: 
+		uniqueId = uuid.uuid4()
+		if "data" in jsonItem: 
+			orderData = jsonItem["data"]
+			okCoinTimestamp = orderData["timestamp"]
+			dateRecv = datetime.datetime.fromtimestamp((float(okCoinTimestamp) / 1000), TIMEZONE)
+			
+			for order in orderData["bids"]: 
+				okcoinOrderDto = {}
+				okcoinOrderDto["uuid"] = str(uniqueId)
+				okcoinOrderDto["date"] = okCoinTimestamp
+				okcoinOrderDto["price"] = float(order[0])
+				okcoinOrderDto["amount"] = float(order[1])
+				okcoinOrderDto["order_type"] = "BID" 
+				addOrderBookItem(okcoinOrderDto, "okcoin_order_book")
+
+			for order in orderData["asks"]: 
+				okcoinOrderDto = {}
+				okcoinOrderDto["uuid"] = str(uniqueId)
+				okcoinOrderDto["date"] = okCoinTimestamp
+				okcoinOrderDto["price"] = float(order[0])
+				okcoinOrderDto["amount"] = float(order[1] * -1)
+				okcoinOrderDto["order_type"] = "ASK" 
+				addOrderBookItem(okcoinOrderDto, "okcoin_order_book")
+
+	pass
+
+
+def addOrderBookItem(dto, doctype): 
+	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
+	successful = putNewDocumentRequest["created"]
+	if successful == True: 
+		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER")
+	else: 
+		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 
 def injectTickerData(data): 
 	tempData = data
