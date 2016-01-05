@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+__author__ = "donnydevito"
+__copyright__   = "Copyright 2015, donnydevito"
+__license__ = "MIT"
+
 import json, uuid, datetime, pytz, elasticsearch
 from websocket import create_connection
 
