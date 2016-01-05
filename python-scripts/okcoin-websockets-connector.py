@@ -70,7 +70,8 @@ def createMappings(es):
 		                "properties": { 
 							"price": { "type": "float"},
 							"count": { "type" : "float" },
-							"amount": {"type": "float"} 
+							"amount": {"type": "float"}, 
+							"order_type" : { "type": "string"} 
 		                }
 					}
 					# "largest_bid_order_weighted_by_volume"
@@ -150,7 +151,7 @@ def processOrderbook(okcoinData):
 			for order in orderData["bids"]: 
 				okcoinOrderDto = {}
 				okcoinOrderDto["uuid"] = str(uniqueId)
-				okcoinOrderDto["date"] = okCoinTimestamp
+				okcoinOrderDto["date"] = dateRecv
 				okcoinOrderDto["price"] = float(order[0])
 				okcoinOrderDto["amount"] = float(order[1])
 				okcoinOrderDto["order_type"] = "BID" 
@@ -159,7 +160,7 @@ def processOrderbook(okcoinData):
 			for order in orderData["asks"]: 
 				okcoinOrderDto = {}
 				okcoinOrderDto["uuid"] = str(uniqueId)
-				okcoinOrderDto["date"] = okCoinTimestamp
+				okcoinOrderDto["date"] = dateRecv
 				okcoinOrderDto["price"] = float(order[0])
 				okcoinOrderDto["amount"] = float(order[1] * -1)
 				okcoinOrderDto["order_type"] = "ASK" 
