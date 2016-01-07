@@ -60,7 +60,7 @@ def processThisWeekFutureTicker(okcoinData):
 			futureDto["sell"] = float(orderData["sell"]) 
 			futureDto["amount"] = float(orderData["unitAmount"]) 
 			futureDto["volume"] = float(orderData["volume"]) 
-		addOrderBookItem(futureDto, "ok_coin_futures_this_week")
+			addOrderBookItem(futureDto, "ok_coin_futures_this_week")
 
 
 def processOrderbook(okcoinData): 
