@@ -96,16 +96,25 @@ def createMappings(es):
 					# "largest_order_by_volume" 
 					# "standard_deviation_orders"
 					# "new_order_delta"
-
 				}
 
 			}
 		} 
+		bitfinexMarginBookMapping = "bitfinex_marginbook": { 
+			"uuid":{"type": "float"}
+		    "date":{"type": "date"},
+		    "rate":{ "type": "float"},
+		    "amount":{"type": "float"},
+		    "period":{"type": "float"},
+		    "timestamp": {"type": "float", "index": "no"},
+		    "frr":{"type": "string"}
+		}
 		es.indices.create(DEFAULT_INDEX_NAME)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_marginbook", body=bitfinexMarginBookMapping)
 
 		mappingCreated = True
 	except: 
@@ -161,10 +170,20 @@ def run():
 	    "prec": "P0",
 	    "len":"100"	
 	}))
+
+	ws.send(json.dumps({
+		"event": "subscribe",
+	    "channel": "book",
+	    "pair": "BTCUSD",
+	    "prec": "P0",
+	    "len":"100"	
+	}))
+
 	bookChannel = None
 	tickerChannel = None
+	marginChannel = None
 
-	while (bookChannel == None or tickerChannel == None):
+	while (bookChannel == None or tickerChannel == None or marginChannel == None):
 		result = ws.recv()
 		result = json.loads(result)
 
