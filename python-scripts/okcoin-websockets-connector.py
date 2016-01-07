@@ -28,7 +28,7 @@ def getJsonData(okcoinData):
 def on_open(self):
     self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary':'true'}")
     self.send("{'event':'addChannel','channel':'ok_btcusd_depth'}")
-    self.send("{'event': 'addChannel', 'channel': 'ok_btcusd_future_ticker_this_week'}")
+    # self.send("{'event': 'addChannel', 'channel': 'ok_btcusd_future_ticker_this_week'}")
   
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
@@ -38,8 +38,8 @@ def on_message(self, event):
 		injectTickerData(okcoinData)
 	elif curChannel == "ok_btcusd_depth": 
 		processOrderbook(okcoinData) 
-	elif curChannel == "ok_btcusd_future_ticker_this_week":
-		processThisWeekFutureTicker(okcoinData)
+	# elif curChannel == "ok_btcusd_future_ticker_this_week":
+	# 	processThisWeekFutureTicker(okcoinData)
 
 
 def processThisWeekFutureTicker(okcoinData): 
