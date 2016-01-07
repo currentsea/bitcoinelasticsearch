@@ -60,7 +60,7 @@ def processThisWeekFutureTicker(okcoinData):
 			futureDto["sell"] = float(orderData["sell"]) 
 			futureDto["amount"] = float(orderData["unitAmount"]) 
 			futureDto["volume"] = float(orderData["volume"]) 
-		addOrderBookItem(futureDto, "ok_btcusd_future_ticker_this_week")
+		addOrderBookItem(futureDto, "ok_coin_futures_this_week")
 
 
 def processOrderbook(okcoinData): 
@@ -98,7 +98,7 @@ def addOrderBookItem(dto, doctype):
 	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
-		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER")
+		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER " + docType)
 	else: 
 		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 
