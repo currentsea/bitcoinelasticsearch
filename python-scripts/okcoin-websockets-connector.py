@@ -28,7 +28,8 @@ def getJsonData(okcoinData):
 def on_open(self):
     self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary':'true'}")
     self.send("{'event':'addChannel','channel':'ok_btcusd_depth'}")
-
+    self.send("{'event': 'addChannel', 'channel': 'ok_btcusd_future_ticker_this_week'}")
+  
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
 	jsonData = getJsonData(okcoinData)
@@ -37,6 +38,30 @@ def on_message(self, event):
 		injectTickerData(okcoinData)
 	elif curChannel == "ok_btcusd_depth": 
 		processOrderbook(okcoinData) 
+	elif curChannel == "ok_btcusd_future_ticker_this_week":
+		processThisWeekFutureTicker(okcoinData)
+
+
+def processThisWeekFutureTicker(okcoinData): 
+	jsonData = getJsonData(okcoinData)
+	futureDto = {}
+	for jsonItem in jsonData: 
+		uniqueId = uuid.uuid4()
+		if "data" in jsonItem: 
+			recordDate = datetime.datetime.now(TIMEZONE)
+			orderData = jsonItem["data"]
+			futureDto["uuid"] = str(uniqueId) 
+			futureDto["date"] = recordDate
+			futureDto["contractId"] = str(orderData["contractId"])
+			futureDto["high"] = float(orderData["high"]) 
+			futureDto["buy"] = float(orderData["buy"])
+			futureDto["low"] = float(orderData["low"]) 
+			futureDto["last"] = float(orderData["last"]) 
+			futureDto["sell"] = float(orderData["sell"]) 
+			futureDto["amount"] = float(orderData["unitAmount"]) 
+			futureDto["volume"] = float(orderData["volume"]) 
+		addOrderBookItem(futureDto, "ok_btcusd_future_ticker_this_week")
+
 
 def processOrderbook(okcoinData): 
 	jsonData = getJsonData(okcoinData) 
@@ -126,7 +151,8 @@ def inflate(okcoinData):
     return inflatedData
 
 def on_error(self, event):
-    print (event)
+    print ("ERROR IS")
+    print(event)
 
 def on_close(self, event):
     print (event)

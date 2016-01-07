@@ -124,6 +124,22 @@ def createMappings(es):
 				 }
 			}
 		} 
+		okCoinFutureThisWeekMapping = { 
+			"ok_coin_futures_this_week": {
+				"properties": { 
+					"uuid": { "type" : "string", "index": "no" }, 
+					"date": { "type" : "date" }, 
+					"buy" :  { "type" : "float" }, 
+					"high": { "type" : "float" }, 
+					"low": { "type" : "float" }, 
+					"last": { "type" : "float" }, 
+					"sell": { "type" : "float" }, 
+					"amount": { "type" : "float" }, 
+					"volume": { "type" : "float" }, 
+					"contractId": { "type" : "string", "index": "not_analyzed" }
+				}
+			}
+		}
 
 		es.indices.create(DEFAULT_INDEX_NAME)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
@@ -131,6 +147,8 @@ def createMappings(es):
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="ok_coin_futures_this_week", body=okCoinFutureThisWeekMapping)
+
 		mappingCreated = True
 	except: 
 		pass
@@ -283,23 +301,27 @@ def run():
 					tradeDto = {}
 					print("below is item")
 					print(item)
-					tradeDto["tradeId"] = str(item[0])
-					tradeDto["timestamp"] = str(item[1])
-					tradeDto["price"] = float(item[2]) 
-					tradeAmount = float(item[3])
-					if tradeAmount < 0: 
-						orderType = "ASK"
-					else: 
-						orderType = "BID" 
-					tradeDto["amount"] = tradeAmount
-					tradeDto["order_type"] = orderType
-					putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_completed_trade', ignore=[400], id=str(uuid.uuid4()), body=tradeDto)
-					successful = putNewDocumentRequest["created"]
-					if successful == True: 
-						print("Added completed trade data to ES cluster: " + uniqueId) 
-					else: 
-						print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
-						
+					try: 
+						tradeDto["tradeId"] = str(item[0])
+						tradeDto["timestamp"] = str(item[1])
+						tradeDto["price"] = float(item[2]) 
+						tradeAmount = float(item[3])
+						if tradeAmount < 0: 
+							orderType = "ASK"
+						else: 
+							orderType = "BID" 
+						tradeDto["amount"] = tradeAmount
+						tradeDto["order_type"] = orderType
+						putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_completed_trade', ignore=[400], id=str(uuid.uuid4()), body=tradeDto)
+						successful = putNewDocumentRequest["created"]
+						if successful == True: 
+							print("Added completed trade data to ES cluster: " + uniqueId) 
+						else: 
+							print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+					except: 
+						print "fucking index error:" 
+						print (item) 
+						print "shit" 
 	ws.close()
 
 
