@@ -98,7 +98,7 @@ def addOrderBookItem(dto, doctype):
 	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
-		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER " + docType)
+		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER " + doctype)
 	else: 
 		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 
