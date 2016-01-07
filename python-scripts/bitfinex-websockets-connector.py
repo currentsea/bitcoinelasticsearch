@@ -78,6 +78,8 @@ def createMappings(es):
 			}
 		} 
 
+
+
 		okcoinOrderBookMapping = { 
 			"okcoin_order_book": { 
 				"properties": { 
@@ -101,12 +103,34 @@ def createMappings(es):
 
 			}
 		} 
+
+
+		bitfinexCompletedTradeMapping = { 
+			"bitfinex_completed_trade": { 
+				"properties": { 
+
+					# 		SEQ	string	Trade sequence id
+					# TIMESTAMP	int	Unix timestamp of the trade.
+					# PRICE	float	Price at which the trade was executed
+					# AMOUNT	float	How much was bought (positive) or sold (negative).
+					# The order that causes the trade determines if it is a buy or a sell.
+					"uuid": { "type": "string", "index": "no" }, 
+					"date" : { "type": "date" }, 
+					"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
+					"timestamp": {"type": "string", "index": "no"},
+					"price": {"type": "float"}, 
+					"amount": {"type": "float"},
+					"order_type" : { "type": "string"} 
+				 }
+			}
+		} 
+
 		es.indices.create(DEFAULT_INDEX_NAME)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
 		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
-
+		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
 		mappingCreated = True
 	except: 
 		pass
@@ -161,10 +185,19 @@ def run():
 	    "prec": "P0",
 	    "len":"100"	
 	}))
+
+
+	ws.send(json.dumps({ 
+	    "event": "subscribe",
+	    "channel": "trades",
+	    "pair": "BTCUSD"
+	}))
+
 	bookChannel = None
 	tickerChannel = None
+	tradeChannel = None
 
-	while (bookChannel == None or tickerChannel == None):
+	while (bookChannel == None or tickerChannel == None or tradeChannel == None):
 		result = ws.recv()
 		result = json.loads(result)
 
@@ -178,6 +211,9 @@ def run():
 			elif channel == "ticker": 
 				tickerChannel = result["chanId"]
 				print("TICKER CHANNEL " + str(tickerChannel))
+			elif channel == "trades": 
+				tradeChannel = result["chanId"] 
+				print("TRADES CHANNEL: " + str(tradeChannel))
 			else: 
 				print("These aren't the droids you're looking for.")
 
@@ -228,6 +264,42 @@ def run():
 					print("Added ticker data to ES cluster: " + uniqueId) 
 				else: 
 					print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+		elif curChannel == tradeChannel: 
+			# "uuid": { "type": "string", "index": "no" }, 
+			# "date" : { "type": "date" }, 
+			# "tradeId" : { "type" : "string", "index":"not_analyzed"}, 
+			# "timestamp": {"type": "string", "index": "no"},
+			# "price": {"type": "float"}, 
+			# "amount": {"type": "float"}
+# SEQ	string	Trade sequence id
+# TIMESTAMP	int	Unix timestamp of the trade.
+# PRICE	float	Price at which the trade was executed
+# AMOUNT	float	
+			print(result) 
+			if (result[1] == 'hb'): 
+				print("HEARTBEAT!") 
+			else: 
+				for item in result[1]: 
+					tradeDto = {}
+					print("below is item")
+					print(item)
+					tradeDto["tradeId"] = str(item[0])
+					tradeDto["timestamp"] = str(item[1])
+					tradeDto["price"] = float(item[2]) 
+					tradeAmount = float(item[3])
+					if tradeAmount < 0: 
+						orderType = "ASK"
+					else: 
+						orderType = "BID" 
+					tradeDto["amount"] = tradeAmount
+					tradeDto["order_type"] = orderType
+					putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_completed_trade', ignore=[400], id=str(uuid.uuid4()), body=tradeDto)
+					successful = putNewDocumentRequest["created"]
+					if successful == True: 
+						print("Added completed trade data to ES cluster: " + uniqueId) 
+					else: 
+						print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+						
 	ws.close()
 
 
