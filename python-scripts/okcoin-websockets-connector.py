@@ -133,7 +133,6 @@ def on_close(self, event):
 
 if __name__ == "__main__":
 	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
-	createMappings(es)
 	websocket.enableTrace(False)
 	ws = websocket.WebSocketApp(OKCOIN_WEBSOCKET_URL, on_message = on_message, on_error = on_error, on_close = on_close)
 	ws.on_open = on_open
