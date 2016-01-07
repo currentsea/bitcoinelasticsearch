@@ -319,9 +319,9 @@ def run():
 						else: 
 							print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 					except: 
-						print "fucking index error:" 
+						print("fucking index error:")
 						print (item) 
-						print "shit" 
+						print("shit")
 	ws.close()
 
 
