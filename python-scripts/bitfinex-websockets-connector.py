@@ -77,9 +77,6 @@ def createMappings(es):
 
 			}
 		} 
-
-
-
 		okcoinOrderBookMapping = { 
 			"okcoin_order_book": { 
 				"properties": { 
@@ -103,8 +100,6 @@ def createMappings(es):
 
 			}
 		} 
-
-
 		bitfinexCompletedTradeMapping = { 
 			"bitfinex_completed_trade": { 
 				"properties": { 
@@ -165,18 +160,13 @@ def injectOrderBlock(orderbook, es, recordDate, uniqueId):
 		theCount = item[1]
 		orderDto["count"] = float(theCount)
 		theAmount = item[2] 
-
 		theAmount = float(theAmount) 
-
 		if theAmount < 0: 
 			orderDto["order_type"] = "ASK"
 		else: 
 			orderDto["order_type"] = "BID" 
 			
 		orderDto["amount"] = float(theAmount)
-
-
-
 		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_order_book', ignore=[400], id=uuid.uuid4(), body=orderDto)
 		successful = putNewDocumentRequest["created"]
 		if successful == True: 
@@ -187,22 +177,23 @@ def injectOrderBlock(orderbook, es, recordDate, uniqueId):
 
 def run(): 
 	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
-	createMappings(es)
+	mappings = createMappings(es)
+	print("MAPPINGS CREATED: " + str(mappings))
 	ws = create_connection("wss://api2.bitfinex.com:3000/ws")
 
-	ws.send(json.dumps({
-	    "event": "subscribe",
-	    "channel": "ticker",
-	    "pair": "BTCUSD"
-	}))
+	# ws.send(json.dumps({
+	#     "event": "subscribe",
+	#     "channel": "ticker",
+	#     "pair": "BTCUSD"
+	# }))
 
-	ws.send(json.dumps({
-		"event": "subscribe",
-	    "channel": "book",
-	    "pair": "BTCUSD",
-	    "prec": "P0",
-	    "len":"100"	
-	}))
+	# ws.send(json.dumps({
+	# 	"event": "subscribe",
+	#     "channel": "book",
+	#     "pair": "BTCUSD",
+	#     "prec": "P0",
+	#     "len":"100"	
+	# }))
 
 
 	ws.send(json.dumps({ 
@@ -211,8 +202,10 @@ def run():
 	    "pair": "BTCUSD"
 	}))
 
-	bookChannel = None
-	tickerChannel = None
+	# bookChannel = None
+	# tickerChannel = None
+	bookChannel = -1
+	tickerChannel = -1
 	tradeChannel = None
 
 	while (bookChannel == None or tickerChannel == None or tradeChannel == None):
@@ -283,6 +276,7 @@ def run():
 				else: 
 					print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 		elif curChannel == tradeChannel: 
+			print("WERE IN TRADES CHANNEL") 
 			# "uuid": { "type": "string", "index": "no" }, 
 			# "date" : { "type": "date" }, 
 			# "tradeId" : { "type" : "string", "index":"not_analyzed"}, 
@@ -293,35 +287,50 @@ def run():
 # TIMESTAMP	int	Unix timestamp of the trade.
 # PRICE	float	Price at which the trade was executed
 # AMOUNT	float	
-			print(result) 
+			# print(result) 
 			if (result[1] == 'hb'): 
 				print("HEARTBEAT!") 
 			else: 
-				for item in result[1]: 
-					tradeDto = {}
-					print("below is item")
-					print(item)
-					try: 
-						tradeDto["tradeId"] = str(item[0])
-						tradeDto["timestamp"] = str(item[1])
-						tradeDto["price"] = float(item[2]) 
-						tradeAmount = float(item[3])
-						if tradeAmount < 0: 
-							orderType = "ASK"
-						else: 
-							orderType = "BID" 
-						tradeDto["amount"] = tradeAmount
-						tradeDto["order_type"] = orderType
-						putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_completed_trade', ignore=[400], id=str(uuid.uuid4()), body=tradeDto)
-						successful = putNewDocumentRequest["created"]
-						if successful == True: 
-							print("Added completed trade data to ES cluster: " + uniqueId) 
-						else: 
-							print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
-					except: 
-						print("fucking index error:")
-						print (item) 
-						print("shit")
+				print("NON HEARTBEAT")
+				theData = result[1]
+
+				if len(result[1]) == 4: 
+					print("THIS SHOULD BE ONE AND ONLY ONE FUCKING OBJECT")
+					print(theData)
+				else: 
+					print("this should be a fucking array")
+					print(theData)
+					if (len(theData) == 1): 
+						print ("NOT AN ARRAY. LENGTH SHOWN BELOW") 
+						print (len(theData))
+						print()
+					else: 
+						for item in theData: 
+
+							try: 
+								tradeDto = {}
+								tradeDto["date"] = recordDate
+								tradeDto["uuid"] = uniqueId
+								tradeDto["tradeId"] = str(item[0])
+								tradeDto["timestamp"] = str(item[1])
+								tradeDto["price"] = float(item[2]) 
+								tradeAmount = float(item[3])
+								if tradeAmount < 0: 
+									orderType = "ASK"
+								else: 
+									orderType = "BID" 
+								tradeDto["amount"] = tradeAmount
+								tradeDto["order_type"] = orderType
+								putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex_completed_trade', ignore=[400], id=uuid.uuid4(), body=tradeDto)
+								successful = putNewDocumentRequest["created"]
+								if successful == True: 
+									print("Added completed trade data to ES cluster: " + uniqueId) 
+								else: 
+									print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+							except: 
+								print("fucking index error:")
+								print (item) 
+								print("shit")
 	ws.close()
 
 

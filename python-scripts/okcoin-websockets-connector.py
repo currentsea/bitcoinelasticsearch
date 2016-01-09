@@ -23,6 +23,7 @@ def getJsonData(okcoinData):
 	tempData = okcoinData
 	dataStr = tempData.decode(encoding='UTF-8')
 	jsonData =json.loads(dataStr)
+	print(jsonData)
 	return jsonData
 
 def on_open(self):
