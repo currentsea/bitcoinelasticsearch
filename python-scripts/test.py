@@ -1,110 +1,128 @@
-import json, uuid, datetime, pytz, elasticsearch
-from websocket import create_connection
 
-# Default index name in elasticsearch to use for the btc_usd market data aggregation
-DEFAULT_INDEX_NAME = "btcwebsockettickerarchive"
-
-# UTC ALL THE TIME, FOREVER AND EVER. 
-TIMEZONE = pytz.timezone('UTC')
-
-# ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
-ELASTICSEARCH_HOST = "http://localhost:9200"
-
-def createMappings(es): 
-	mappingCreated = False
-	try: 
-		bitfinexMapping = {
-			"bitfinex": {
-				"properties": {
-					"uuid": { "type": "string", "index": "no"}, 
-					"date": {"type": "date"},
-					"last_price": {"type": "float"},
-					"timestamp": {"type": "string", "index": "no"},
-					"volume": {"type": "float"},
-					"high": {"type": "float"},
-					"ask": {"type": "float"},
-					"low": {"type": "float"},
-					"dailyChange": {"type": "float"}, 
-					"dailyDelta": {"type" : "float"}, 
-					"askVolume": {"type": "float"}, 
-					"bidVolume": {"type": "float"},
-					"bid": {"type": "float"}
-				}
+def getBitfinexMappings(): 
+	bitfinexMappings = {}
+	bitfinexMapping = {
+		"bitfinex": {
+			"properties": {
+				"uuid": { "type": "string", "index": "no"}, 
+				"date": {"type": "date"},
+				"last_price": {"type": "float"},
+				"timestamp": {"type": "string", "index": "no"},
+				"volume": {"type": "float"},
+				"high": {"type": "float"},
+				"ask": {"type": "float"},
+				"low": {"type": "float"},
+				"dailyChange": {"type": "float"}, 
+				"dailyDelta": {"type" : "float"}, 
+				"askVolume": {"type": "float"}, 
+				"bidVolume": {"type": "float"},
+				"bid": {"type": "float"}
 			}
 		}
-		okcoinMapping = { 
-			"okcoin": { 
-				"properties": {
-					"uuid": { "type": "string", "index": "no"}, 
-					"date": {"type":"date"}, 
-					"last_price": {"type": "float"}, 
-					"timestamp": {"type": "string", "index": "no"},
-					"volume": {"type": "float"},
-					"high": {"type": "float"},
-					"ask": {"type": "float"},
-					"low": {"type": "float"},
-					"bid": {"type": "float"}
+	}
+	bitfinexOrderBookMapping = { 
+		"bitfinex_order_book": { 
+			"properties": { 
+				"uuid": { "type": "string", "index": "no"}, 
+				"date": {"type":"date"}, 
+				"orders" : { 
+	                "type" : "nested",
+	                "properties": { 
+						"price": { "type": "float"},
+						"amount": {"type": "float"}, 
+						"count": {"type": "float"}, 
+						"order_type": {"type": "string"} 
+	                }
 				}
+				# "largest_bid_order_weighted_by_volume"
+				# "largest_ask_order_weighted_by_volume"
+				# "largest_order_by_volume" 
+				# "standard_deviation_orders"
+				# "new_order_delta"
+
+			}
+
+		}
+	} 
+	bitfinexCompletedTradeMapping = { 
+		"bitfinex_completed_trade": { 
+			"properties": { 
+
+				# 		SEQ	string	Trade sequence id
+				# TIMESTAMP	int	Unix timestamp of the trade.
+				# PRICE	float	Price at which the trade was executed
+				# AMOUNT	float	How much was bought (positive) or sold (negative).
+				# The order that causes the trade determines if it is a buy or a sell.
+				"uuid": { "type": "string", "index": "no" }, 
+				"date" : { "type": "date" }, 
+				"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
+				"timestamp": {"type": "string", "index": "no"},
+				"price": {"type": "float"}, 
+				"amount": {"type": "float"},
+				"order_type" : { "type": "string"} 
+			 }
+		}
+	} 
+	bitfinexMappings["bitfinex"] = bitfinexMapping
+	bitfinexMappings["bitfinex_order_book"] = bitfinexOrderBookMapping
+	bitfinexMappings["bitfinex_completed_trade"] = bitfinexCompletedTradeMapping
+	return bitfinexMappings
+
+def getOkCoinMappings(): 
+	okcoinMapping = { 
+		"okcoin": { 
+			"properties": {
+				"uuid": { "type": "string", "index": "no"}, 
+				"date": {"type":"date"}, 
+				"last_price": {"type": "float"}, 
+				"timestamp": {"type": "string", "index": "no"},
+				"volume": {"type": "float"},
+				"high": {"type": "float"},
+				"ask": {"type": "float"},
+				"low": {"type": "float"},
+				"bid": {"type": "float"}
 			}
 		}
-		es.indices.create(DEFAULT_INDEX_NAME)
-		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="bitfinex", body=bitfinexMapping)
-		es.indices.put_mapping(index=DEFAULT_INDEX_NAME, doc_type="okcoin", body=okcoinMapping)
-		mappingCreated = True
-	except: 
-		pass
-	return mappingCreated
+	}
+	okcoinOrderBookMapping = { 
+		"okcoin_order_book": { 
+			"properties": { 
+				"uuid": { "type": "string", "index": "no"}, 
+				"date": {"type":"date"}, 
+				"orders" : { 
+	                "type" : "nested",
+	                "properties": { 
+						"price": { "type": "float"},
+						"amount": {"type": "float"}, 
+						"order_type" : { "type": "string"} 
+	                }
+				}
+				# "largest_bid_order_weighted_by_volume"
+				# "largest_ask_order_weighted_by_volume"
+				# "largest_order_by_volume" 
+				# "standard_deviation_orders"
+				# "new_order_delta"
 
-if __name__ == "__main__": 
+			}
 
-	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
-	createMappings(es)
-	ws = create_connection("wss://api2.bitfinex.com:3000/ws")
+		}
+	} 
+	okCoinFutureThisWeekMapping = { 
+		"ok_coin_futures_this_week": {
+			"properties": { 
+				"uuid": { "type" : "string", "index": "no" }, 
+				"date": { "type" : "date" }, 
+				"buy" :  { "type" : "float" }, 
+				"high": { "type" : "float" }, 
+				"low": { "type" : "float" }, 
+				"last": { "type" : "float" }, 
+				"sell": { "type" : "float" }, 
+				"amount": { "type" : "float" }, 
+				"volume": { "type" : "float" }, 
+				"contractId": { "type" : "string", "index": "not_analyzed" }
+			}
+		}
+	}	
 
-	ws.send(json.dumps({
-	    "event": "subscribe",
-	    "channel": "ticker",
-	    "pair": "BTCUSD"
-	}))
-
-
-	while True:
-		result = ws.recv()
-		result = json.loads(result)
-		if (len(result) == 11): 
-			uniqueId = str(uuid.uuid4())
-			recordDate = datetime.datetime.now()
-			bidPrice = float(result[1])
-			bidVol = float(result[2]) 
-			askPrice = float(result[3]) 
-			askVol = float(result[4]) 
-			dailyChange = float(result[5]) 
-			dailyDelta = float(result[6]) 
-			lastPrice = float(result[7]) 
-			volume = float(result[8]) 
-			highPrice = float(result[9])
-			lowPrice = float(result[10])
-			bitfinexTickerDict = {}
-			bitfinexTickerDict["uuid"] = uniqueId
-			bitfinexTickerDict["date"] = recordDate
-			bitfinexTickerDict["last_price"] = lastPrice
-			bitfinexTickerDict["volume"] = volume 
-			bitfinexTickerDict["high"] = highPrice
-			bitfinexTickerDict["ask"] = askPrice
-			bitfinexTickerDict["low"] = lowPrice
-			bitfinexTickerDict["bid"] = bidPrice
-			bitfinexTickerDict["dailyChange"] = dailyChange
-			bitfinexTickerDict["dailyDelta"] = dailyDelta
-			bitfinexTickerDict["askVolume"] = askVol
-			bitfinexTickerDict["bidVolume"] = bidVol
-			print (bitfinexTickerDict)
-			putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='bitfinex', ignore=[400], id=uniqueId, body=bitfinexTickerDict)
-			print (putNewDocumentRequest)
-			successful = putNewDocumentRequest["created"]
-			if successful == True: 
-				print("WEBSOCKET ENTRY ADDED TO ES CLUSTER")
-			else: 
-				print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
-
-
-	ws.close()
+if __name__ == '__main__':
+	print(getBitfinexMappings())

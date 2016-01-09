@@ -4,6 +4,7 @@ __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
 import websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz
+from create_mappings import createMappings
 
 BITFINEX_WEBSOCKET_URL = "wss://api2.bitfinex.com:3000/ws"
 OKCOIN_WEBSOCKET_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
@@ -135,7 +136,7 @@ def processTickerData(item):
 	okCoinDto["ask"] = float(askPrice)
 	okCoinDto["low"] = float(lowPrice)
 	okCoinDto["bid"] = float(bidPrice)
-	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin', ignore=[400], id=uniqueId, body=okCoinDto)
+	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin_ticker', ignore=[400], id=uniqueId, body=okCoinDto)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
 		print("WEBSOCKET ENTRY ADDED TO ES CLUSTER")
@@ -152,14 +153,16 @@ def inflate(okcoinData):
     return inflatedData
 
 def on_error(self, event):
-    print ("ERROR IS")
+    print("ERROR IS")
     print(event)
 
 def on_close(self, event):
-    print (event)
+    print(event)
 
 if __name__ == "__main__":
 	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
+	mappings = createMappings(es, DEFAULT_INDEX_NAME)
+	print("CREATED MAPPINGS: " + str(mappings))
 	websocket.enableTrace(False)
 	ws = websocket.WebSocketApp(OKCOIN_WEBSOCKET_URL, on_message = on_message, on_error = on_error, on_close = on_close)
 	ws.on_open = on_open
