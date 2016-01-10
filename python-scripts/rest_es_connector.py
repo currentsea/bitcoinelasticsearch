@@ -177,7 +177,6 @@ if __name__ == "__main__":
 	warnings.filterwarnings("ignore")
 	es = Elasticsearch([ELASTICSEARCH_HOST])
 	mappingCreated = createMappings(es)
-
 	logTime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	if mappingCreated == True:
 		print("[" + logTime + "]: Created ES Mapping " + DEFAULT_INDEX_NAME + " \n Begin data collection...")
