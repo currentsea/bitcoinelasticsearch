@@ -135,6 +135,3 @@ def createMappings(es, indexName):
 	except: 
 		pass
 	return mappingCreated
-
-if __name__ == "__main__": 
-	print 
