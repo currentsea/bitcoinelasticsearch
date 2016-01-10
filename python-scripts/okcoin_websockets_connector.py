@@ -3,7 +3,7 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz, logging
+import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz
 from create_mappings import createMappings
 from pytz import timezone
 from datetime import timedelta
@@ -18,6 +18,9 @@ ELASTICSEARCH_HOST = "http://localhost:9200"
 # Default index name in elasticsearch to use for the btc_usd market data aggregation
 DEFAULT_INDEX_NAME = "btcwebsockettickerarchive"
 
+CANDLE_LIST = [ "ok_btcusd_kline_1min", "ok_btcusd_kline_3min", "ok_btcusd_kline_5min", "ok_btcusd_kline_15min", "ok_btcusd_kline_30min", "ok_btcusd_kline_1hour", "ok_btcusd_kline_2hour", "ok_btcusd_kline_4hour", "ok_btcusd_kline_6hour", "ok_btcusd_kline_12hour", "ok_btcusd_kline_day", "ok_btcusd_kline_3day", "ok_btcusd_kline_week" ] 
+
+
 es = None
 
 def getJsonData(okcoinData):
@@ -27,24 +30,37 @@ def getJsonData(okcoinData):
 	return jsonData
 
 def on_open(self):
-    self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-    self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
-    self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
+	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
 
-    ## TODO
-    # Request 
-	# {'event':'addChannel','channel':'ok_btcusd_trades_v1'}
-	# Response
-	# [{
-	#   "channel":"ok_btcusd_trades_v1",
-	#   "data":[["1001","2463.86","0.052","16:34:07","ask"]]
-	# }]
-	  
+## TODO
+# Request 
+# {'event':'addChannel','channel':'ok_btcusd_trades_v1'}
+# Response
+# [{
+#   "channel":"ok_btcusd_trades_v1",
+#   "data":[["1001","2463.86","0.052","16:34:07","ask"]]
+# }]
+
 
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
 	jsonData = getJsonData(okcoinData)
-	print("-----")
+	print(jsonData)
 	for item in jsonData: 
 		curChannel = item["channel"]
 		if curChannel == "ok_btcusd_ticker": 
@@ -52,14 +68,62 @@ def on_message(self, event):
 		elif curChannel == "ok_btcusd_depth": 
 			processOrderbook(self, event, item) 
 		elif curChannel == "ok_btcusd_trades_v1": 
-			printData(jsonData)
+			processCompletedTrades(jsonData)
+		elif curChannel in CANDLE_LIST: 
+			processCandleStick(curChannel, item)
 		else: 
 			print("WTF")
 	print("-----") 
 
 	pass
 
-def printData(jsonData):
+def processCandleStick(candleType, jsonData): 
+	# btc_candlesticks is index
+	# ok_coin_candlestick is doctype 
+	dataObj = jsonData["data"]
+# okcoinCandleStickMapping = { 
+# 			"ok_coin_candlestick": {  
+# 				"properties": { 
+# 					"uuid": { "type": "string", "index": "no" }, 
+# 					"date" : { "type": "date" }, 
+# 					"candle_type" : { "type": "string"}, 
+# 					"timestamp": {"type": "string", "index": "no"},
+# 					"open_price": { "type" : "float" }, 
+# 					"highest_price": { "type" : "float" }, 
+# 					"lowest_price": { "type" : "float" }, 
+# 					"close_price": { "type" : "float" }, 
+# 					"volume": { "type" : "float" }
+# 				}
+# 			}
+# 		}
+	# return data format:[time, open price, highest price, lowest price, close price, volume]
+	dataPoint = dataObj
+	print("candlestick...")
+	if len(dataPoint) == 6: 
+		print(dataPoint)
+		candleDto = {}
+		uniqueId = uuid.uuid4()
+		okCoinTimestamp = dataPoint[0]
+		candleDto["uuid"] = str(uniqueId) 
+		candleDto["date"] = datetime.datetime.utcnow()
+		candleDto["candle_type"] = candleType
+		candleDto["timestamp"] = str(okCoinTimestamp) 
+		candleDto["open_price"] = float(dataPoint[1])
+		candleDto["highest_price"] = float(dataPoint[2])
+		candleDto["lowest_price"] = float(dataPoint[3])
+		candleDto["close_price"] = float(dataPoint[4])
+		volVal = str(dataPoint[5])
+		volVal = volVal.replace(",", "")
+		candleDto["volume"] = float(volVal)
+		putNewDocumentRequest = es.create(index="btc_candlesticks", doc_type='ok_coin_candlestick', ignore=[400], id=str(uuid.uuid4()), body=candleDto)	
+		successful = putNewDocumentRequest["created"]
+		if successful == True: 
+			print("OKCOIN CANDLESTICK DATA STORED.")
+		else: 
+			print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+		pass
+
+def processCompletedTrades(jsonData):
 	print(len(jsonData))
 
 	for item in jsonData: 
@@ -97,7 +161,7 @@ def printData(jsonData):
 				completedTradeDto["tradeId"] = theId
 				completedTradeDto["timestamp"] = None
 				completedTradeDto["amount"] = theAmount
-				completedTradeDto["type"] = theType
+				completedTradeDto["order_type"] = theType
 
 				print (completedTradeDto)
 				
@@ -108,24 +172,7 @@ def printData(jsonData):
 				else: 
 					print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 				pass
-				# realDateStr = datetime.datetime.strftime(realDate, "%Y-%m-%d %H:%M:%S")
-				# print(realDateStr)
-				# utcHour = int(str(dateRecv[0:2]))
-				# print(utcHour)
-				# print (asiaDateStr)
-		# 			okCoinCompletedTradeMapping = { 
-		# 	"ok_coin_completed_trade": {
-		# 		"properties": { 
-		# 			"uuid": { "type": "string", "index": "no" }, 
-		# 			"date" : { "type": "date" }, 
-		# 			"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
-		# 			"timestamp": {"type": "string", "index": "no"},
-		# 			"price": {"type": "float"}, 
-		# 			"amount": {"type": "float"},
-		# 			"order_type" : { "type": "string"} 
-		# 		}
-		# 	}
-		# }
+
 def processOrderbook(self, event, okcoinData): 	
 	if "data" in okcoinData: 
 		orderData = okcoinData["data"]
@@ -156,7 +203,6 @@ def processOrderbook(self, event, okcoinData):
 def addOrderBookItem(self, event, dto, doctype): 
 	putNewDocumentRequest = es.create(index="btc_orderbooks", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
 	successful = putNewDocumentRequest["created"]
-	logging.info(successful)
 	if successful == True: 
 		print("WEBSOCKET ENTRY FOR " + doctype + " ADDED TO ES CLUSTER")
 	else: 
