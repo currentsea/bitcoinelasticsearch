@@ -102,7 +102,7 @@ def processTickerData(self, event, item):
 	okCoinDto["date"] = dateRecv
 	okCoinDto["timestamp"] = str(okCoinTimestamp)
 	okCoinDto["last_price"] = float(lastPrice)
-	okCoinDto["volume"] = volume
+	okCoinDto["volume"] = float(volume)
 	okCoinDto["high"] = float(highPrice) 
 	okCoinDto["ask"] = float(askPrice)
 	okCoinDto["low"] = float(lowPrice)
