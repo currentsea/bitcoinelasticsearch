@@ -72,7 +72,7 @@ def processOrderbook(self, event, okcoinData):
 
 
 def addOrderBookItem(self, event, dto, doctype): 
-	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
+	putNewDocumentRequest = es.create(index="btc_orderbooks", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
 	successful = putNewDocumentRequest["created"]
 	logging.info(successful)
 	if successful == True: 
@@ -107,7 +107,7 @@ def processTickerData(self, event, item):
 	okCoinDto["ask"] = float(askPrice)
 	okCoinDto["low"] = float(lowPrice)
 	okCoinDto["bid"] = float(bidPrice)
-	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type='okcoin_ticker', ignore=[400], id=uniqueId, body=okCoinDto)
+	putNewDocumentRequest = es.create(index="btc_tickers", doc_type='okcoin_ticker', ignore=[400], id=uniqueId, body=okCoinDto)
 	
 	addOrderBookItem(self, event, okCoinDto, "okcoin_ticker")
 	successful = putNewDocumentRequest["created"]
