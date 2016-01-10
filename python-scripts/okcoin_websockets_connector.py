@@ -91,7 +91,7 @@ def processTickerData(self, event, item):
 	okCoinTimestamp = item["timestamp"]
 	uniqueId = uuid.uuid4()
 	dateRecv = datetime.datetime.fromtimestamp((float(okCoinTimestamp) / 1000), TIMEZONE)
-	volume = itemDict["vol"]
+	volume = item["vol"]
 	volume = volume.replace(",", "") 
 	lastPrice = item["last"]
 	highPrice = item["high"]
