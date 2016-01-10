@@ -27,8 +27,8 @@ def getJsonData(okcoinData):
 	return jsonData
 
 def on_open(self):
-    # self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-    # self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+    self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+    self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
     self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 
     ## TODO
