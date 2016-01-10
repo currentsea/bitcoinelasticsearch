@@ -3,6 +3,7 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
+import elasticsearch
 def createMappings(es, indexName): 
 	mappingCreated = False
 	try: 
@@ -123,30 +124,45 @@ def createMappings(es, indexName):
 			}
 		}
 
+		okCoinCompletedTradeMapping = { 
+			"ok_coin_completed_trade": {
+				"properties": { 
+					"uuid": { "type": "string", "index": "no" }, 
+					"date" : { "type": "date" }, 
+					"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
+					"timestamp": {"type": "string", "index": "no"},
+					"price": {"type": "float"}, 
+					"amount": {"type": "float"},
+					"order_type" : { "type": "string"} 
+				}
+			}
+		}
+
 		tickerIndex = "btc_tickers"
 		orderBookIndex = "btc_orderbooks"
 		completedTradesIndex = "btc_completed_trades"
 		futuresIndex = "btc_futures"
 
-		createIndex(tickerIndex)
-		createIndex(orderBookIndex) 
-		createIndex(completedTradesIndex)
-		createIndex(futuresIndex)
+		createIndex(es, tickerIndex)
+		createIndex(es, orderBookIndex) 
+		createIndex(es, completedTradesIndex)
+		createIndex(es, futuresIndex)
 
 		es.indices.put_mapping(index=tickerIndex, doc_type="bitfinex_ticker", body=bitfinexTickerMapping)
 		es.indices.put_mapping(index=tickerIndex, doc_type="okcoin_ticker", body=okcoinTickerMapping)
 		es.indices.put_mapping(index=orderBookIndex, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
 		es.indices.put_mapping(index=orderBookIndex, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
 		es.indices.put_mapping(index=completedTradesIndex, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
+		es.indices.put_mapping(index=completedTradesIndex, doc_type="ok_coin_completed_trade", body=okCoinCompletedTradeMapping)
 		es.indices.put_mapping(index=futuresIndex, doc_type="ok_coin_futures_this_week", body=okCoinFutureThisWeekMapping)
 
 		mappingCreated = True
-	except: 
+	except elasticsearch.exceptions.RequestError: 
 		pass
 	return mappingCreated
 
-def createIndex(name): 
+def createIndex(es, name): 
 	try: 
 		es.indices.create(name)
 	except: 
-		print ("failed to create index: " + name + " (does it exist already?)")
+		raise

@@ -3,9 +3,10 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz, logging
+import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re, elasticsearch, argparse, uuid, pytz, logging
 from create_mappings import createMappings
-BITFINEX_WEBSOCKET_URL = "wss://api2.bitfinex.com:3000/ws"
+from pytz import timezone
+from datetime import timedelta
 OKCOIN_WEBSOCKET_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
 
 # UTC ALL THE TIME, FOREVER AND EVER. 
@@ -26,8 +27,19 @@ def getJsonData(okcoinData):
 	return jsonData
 
 def on_open(self):
-    self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-    self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+    # self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+    # self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+    self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+
+    ## TODO
+    # Request 
+	# {'event':'addChannel','channel':'ok_btcusd_trades_v1'}
+	# Response
+	# [{
+	#   "channel":"ok_btcusd_trades_v1",
+	#   "data":[["1001","2463.86","0.052","16:34:07","ask"]]
+	# }]
+	  
 
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
@@ -39,11 +51,81 @@ def on_message(self, event):
 			injectTickerData(self, event, item)
 		elif curChannel == "ok_btcusd_depth": 
 			processOrderbook(self, event, item) 
+		elif curChannel == "ok_btcusd_trades_v1": 
+			printData(jsonData)
 		else: 
 			print("WTF")
 	print("-----") 
 
 	pass
+
+def printData(jsonData):
+	print(len(jsonData))
+
+	for item in jsonData: 
+		uniqueId = str(uuid.uuid4())
+		if "data" in item: 
+			curData = item["data"]
+			for curOrder in curData: 
+				completedTradeDto = {}
+				asiaTimeZone = pytz.timezone("Asia/Shanghai")
+				# os.environ["TZ"] = "Asia/Shanghai"
+				# time.tzset()
+				dateRecv = datetime.datetime.strptime(curOrder[3], "%H:%M:%S")
+				theHour = dateRecv.hour
+				theMinute = dateRecv.minute
+				theSecond = dateRecv.second
+				dateOccurred = dateRecv.replace(year=datetime.datetime.now(timezone("Asia/Shanghai")).year, month=datetime.datetime.now(timezone("Asia/Shanghai")).month, day=datetime.datetime.now(timezone("Asia/Shanghai")).day, hour=theHour, minute=theMinute, second=theSecond)
+				fuckingit = timedelta(hours=8)
+
+				# localDate = utcTz.localize(dateOccurred, is_dst=None).astimezone(pytz.utc)
+				# [tid, price, amount, time, type]
+
+				# fuckingtimebullshit = timedelta(hours=8)
+
+				realDate = dateOccurred - fuckingit
+
+				now_aware = pytz.utc.localize(realDate)
+
+
+				theId = str(curOrder[0])
+				thePrice = float(curOrder[1])
+				theAmount = float(curOrder[2])
+				theType = str(curOrder[4])
+				completedTradeDto["uuid"] = uniqueId
+				completedTradeDto["date"] = now_aware
+				completedTradeDto["tradeId"] = theId
+				completedTradeDto["timestamp"] = None
+				completedTradeDto["amount"] = theAmount
+				completedTradeDto["type"] = theType
+
+				print (completedTradeDto)
+				
+				putNewDocumentRequest = es.create(index="btc_completed_trades", doc_type='ok_coin_completed_trade', ignore=[400], id=uuid.uuid4(), body=completedTradeDto)	
+				successful = putNewDocumentRequest["created"]
+				if successful == True: 
+					print("OKCOIN COMPLETED ORDER DATA STORED.")
+				else: 
+					print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+				pass
+				# realDateStr = datetime.datetime.strftime(realDate, "%Y-%m-%d %H:%M:%S")
+				# print(realDateStr)
+				# utcHour = int(str(dateRecv[0:2]))
+				# print(utcHour)
+				# print (asiaDateStr)
+		# 			okCoinCompletedTradeMapping = { 
+		# 	"ok_coin_completed_trade": {
+		# 		"properties": { 
+		# 			"uuid": { "type": "string", "index": "no" }, 
+		# 			"date" : { "type": "date" }, 
+		# 			"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
+		# 			"timestamp": {"type": "string", "index": "no"},
+		# 			"price": {"type": "float"}, 
+		# 			"amount": {"type": "float"},
+		# 			"order_type" : { "type": "string"} 
+		# 		}
+		# 	}
+		# }
 def processOrderbook(self, event, okcoinData): 	
 	if "data" in okcoinData: 
 		orderData = okcoinData["data"]
