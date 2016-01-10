@@ -107,9 +107,7 @@ def processTickerData(self, event, item):
 	okCoinDto["ask"] = float(askPrice)
 	okCoinDto["low"] = float(lowPrice)
 	okCoinDto["bid"] = float(bidPrice)
-	putNewDocumentRequest = es.create(index="btc_tickers", doc_type='okcoin_ticker', ignore=[400], id=uniqueId, body=okCoinDto)
-	
-	addOrderBookItem(self, event, okCoinDto, "okcoin_ticker")
+	putNewDocumentRequest = es.create(index="btc_tickers", doc_type='okcoin_ticker', ignore=[400], id=uniqueId, body=okCoinDto)	
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
 		print("WEBSOCKET ENTRY FOR DOCTYPE: okcoin_ticker ADDED TO ES CLUSTER")
