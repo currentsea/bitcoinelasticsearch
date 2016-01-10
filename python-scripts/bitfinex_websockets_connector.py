@@ -25,6 +25,7 @@ def getCompletedTradeDto(completedTrade, uniqueId, recordDate):
 	tradeDto["tradeId"] = str(completedTrade[0])
 	tradeDto["timestamp"] = str(completedTrade[1])
 	tradeDto["price"] = float(completedTrade[2]) 
+
 	tradeAmount = float(completedTrade[3])
 	if tradeAmount < 0: 
 		orderType = "ASK"
@@ -77,30 +78,33 @@ def getOrderBookDto(orderBookData, uniqueId, recordDate):
 	orderDto["amount"] = float(theAmount)
 	return orderDto 	
 
-def injectOrderBook(es, orderbook, uniqueId, recordDate, docType="bitfinex_order_book", ): 
+def injectOrderBook(es, orderbook, uniqueId, recordDate, indexName="btc_orderbooks", docType="bitfinex_order_book"): 
 	for item in orderbook: 
 		orderDto = getOrderBookDto(item, uniqueId, recordDate)
-		putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
+		putNewDocumentRequest = es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
 		successful = putNewDocumentRequest["created"]
 		if successful == True: 
-			print("ES Entry Added (" + docType + "): " + uniqueId)  
+			print("[INDEX: " + indexName + "] [DOCTYPE: " + docType + "] Updated: " + uniqueId)  
 		else: 
 			print("ES Entry failed to POST: " + uniqueId)  
 
-def injectCompletedTrade(es, completedTrade, indexName=DEFAULT_INDEX_NAME, docType="bitfinex_completed_trade"):
+		# tickerIndex = "btc_tickers"
+		# orderBookIndex = "btc_orderbooks"
+		# completedTradesIndex = "btc_completed_trades"
+def injectCompletedTrade(es, completedTrade, indexName="btc_completed_trades", docType="bitfinex_completed_trade"):
 	putNewDocumentRequest = es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=completedTrade)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
-		print("Added " + str(docType) + " to ES cluster:") 
+		print("[INDEX: " + indexName + "] [DOCTYPE: " + str(docType) + "] Updated: " + str(completedTrade["uuid"])) 
 	else: 
 		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 	return successful 
 
-def injectTickerData(es, tickerData, indexName=DEFAULT_INDEX_NAME, docType="bitfinex_ticker"): 
-	putNewDocumentRequest = es.create(index=DEFAULT_INDEX_NAME, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=tickerData)
+def injectTickerData(es, tickerData, indexName="btc_tickers", docType="bitfinex_ticker"): 
+	putNewDocumentRequest = es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=tickerData)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
-		print("ADDED " + docType + " successfully. ")
+		print("[INDEX: " + indexName + "] [DOCTYPE: " + docType + "]: Updated" + str(tickerData["uuid"]))
 	else: 
 		print("!! FATAL !!: WEBSOCKET ENTRY for doc_tye: " + docType + " NOT ADDED TO ES CLUSTER")
 	return successful
@@ -137,7 +141,6 @@ def run():
 	while (bookChannel == None or tickerChannel == None or tradeChannel == None):
 		result = ws.recv()
 		result = json.loads(result)
-
 		# Channel the FORCE
 		if "channel" in result: 
 			channel = result["channel"]
@@ -159,10 +162,12 @@ def run():
 		result = ws.recv()
 		result = json.loads(result)
 		curChannel = result[0]
+
 		if curChannel == bookChannel: 
 			if len(result) == 2: 
 				if (result[1] == 'hb'): 
-					print("ORDER BOOK HEARTBEAT!") 
+					#print("ORDER BOOK HEARTBEAT!") 
+					pass
 				else: 
 					print("Injecting Initial Orderbook on WS Connect... ID: " + uniqueId) 
 					injectOrderBook(es, result[1], uniqueId, recordDate)
@@ -178,7 +183,8 @@ def run():
 				injectTickerData(es, tickerDto)
 			elif len(result) == 2: 
 				if result[1] == 'hb': 
-					print("TICKER HEARTBEAT!")
+					#print("TICKER HEARTBEAT!")
+					pass
 				else: 
 					print("AWKWARD DATA (heartbeat but not heartbeat): ")
 					print(result[1])
@@ -196,7 +202,8 @@ def run():
 
 def processTradeChannelData(es, result, uniqueId, recordDate): 
 	if (result[1] == 'hb'): 
-		print("TRADES HEARTBEAT!") 
+		#print("TRADES HEARTBEAT!") 
+		pass
 	else: 
 		if type(result[1]) is list: 
 			theData = result[1]
@@ -208,11 +215,12 @@ def processTradeChannelData(es, result, uniqueId, recordDate):
 			theData = result
 			dataLength = len(theData[1:])
 			if dataLength == 4: 
-				print ("ADDING BITFINEX COMPLETED TRADE: " + str(uniqueId)) 
 				tradeDto = getCompletedTradeDto(theData[1:], uniqueId, recordDate) 
 				injectCompletedTrade(es, tradeDto)
 			else: 
-				pass
+				print("!!! fatal !!!")
+				print(theData)
+				raise IOError("Trades length was not == 4")
 
 if __name__ == "__main__": 
 	run()

@@ -6,7 +6,7 @@ __license__ = "MIT"
 def createMappings(es, indexName): 
 	mappingCreated = False
 	try: 
-		bitfinexMapping = {
+		bitfinexTickerMapping = {
 			"bitfinex_ticker": {
 				"properties": {
 					"uuid": { "type": "string", "index": "no"}, 
@@ -25,7 +25,7 @@ def createMappings(es, indexName):
 				}
 			}
 		}
-		okcoinMapping = { 
+		okcoinTickerMapping = { 
 			"okcoin_ticker": { 
 				"properties": {
 					"uuid": { "type": "string", "index": "no"}, 
@@ -123,15 +123,30 @@ def createMappings(es, indexName):
 			}
 		}
 
-		es.indices.create(indexName)
-		es.indices.put_mapping(index=indexName, doc_type="bitfinex_ticker", body=bitfinexMapping)
-		es.indices.put_mapping(index=indexName, doc_type="okcoin_ticker", body=okcoinMapping)
-		es.indices.put_mapping(index=indexName, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
-		es.indices.put_mapping(index=indexName, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
-		es.indices.put_mapping(index=indexName, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
-		es.indices.put_mapping(index=indexName, doc_type="ok_coin_futures_this_week", body=okCoinFutureThisWeekMapping)
+		tickerIndex = "btc_tickers"
+		orderBookIndex = "btc_orderbooks"
+		completedTradesIndex = "btc_completed_trades"
+		futuresIndex = "btc_futures"
+
+		createIndex(tickerIndex)
+		createIndex(orderBookIndex) 
+		createIndex(completedTradesIndex)
+		createIndex(futuresIndex)
+
+		es.indices.put_mapping(index=tickerIndex, doc_type="bitfinex_ticker", body=bitfinexTickerMapping)
+		es.indices.put_mapping(index=tickerIndex, doc_type="okcoin_ticker", body=okcoinTickerMapping)
+		es.indices.put_mapping(index=orderBookIndex, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
+		es.indices.put_mapping(index=orderBookIndex, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
+		es.indices.put_mapping(index=completedTradesIndex, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
+		es.indices.put_mapping(index=futuresIndex, doc_type="ok_coin_futures_this_week", body=okCoinFutureThisWeekMapping)
 
 		mappingCreated = True
 	except: 
 		pass
 	return mappingCreated
+
+def createIndex(name): 
+	try: 
+		es.indices.create(name)
+	except: 
+		print ("failed to create index: " + name + " (does it exist already?)")
