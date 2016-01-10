@@ -63,13 +63,21 @@ def getTickerDto(tickerData, uniqueId, recordDate):
 
 def getOrderBookDto(orderBookData, uniqueId, recordDate): 
 	orderDto = {}
-	thePrice = orderBookData[0]
+	offSet = 0
+	if (len(orderBookData) == 4): 
+		offSet = 1
+	elif (len(orderBookData) == 3): 
+		offSet = 0
+	else: 
+		raise IOError("Invalid orderbook passed to injectOrderBookDto")
+
+	thePrice = orderBookData[0 + offSet]
 	orderDto["uuid"] = uniqueId
 	orderDto["date"] = recordDate
 	orderDto["price"] = float(thePrice)
-	theCount = orderBookData[1]
+	theCount = orderBookData[1 + offSet]
 	orderDto["count"] = float(theCount)
-	theAmount = orderBookData[2] 
+	theAmount = orderBookData[2 + offSet] 
 	theAmount = float(theAmount) 
 	if theAmount < 0: 
 		orderDto["order_type"] = "ASK"
