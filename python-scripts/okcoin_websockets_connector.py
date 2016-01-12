@@ -92,8 +92,8 @@ def processTheFuture(futureType, jsonData):
 	futureDto["unit_amount"] = float(futureData["unitAmount"]) 
 	futureDto["sell"] = float(futureData["sell"]) 
 	futureDto["contract_type"] = str(futureType)
-	createTheFuture(curChannel, "ok_btcusd_future_ticker", futureDto)
-	
+	createTheFuture("btc_futures", "ok_btcusd_future_ticker", futureDto)
+
 def createTheFuture(index, doctype, data): 
 	putNewDocumentRequest = es.create(index=index, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=data)
 	successful = putNewDocumentRequest["created"]
