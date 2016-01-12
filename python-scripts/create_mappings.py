@@ -107,22 +107,6 @@ def createMappings(es, indexName):
 				 }
 			}
 		} 
-		okCoinFutureThisWeekMapping = { 
-			"ok_coin_futures_this_week": {
-				"properties": { 
-					"uuid": { "type" : "string", "index": "no" }, 
-					"date": { "type" : "date" }, 
-					"buy" :  { "type" : "float" }, 
-					"high": { "type" : "float" }, 
-					"low": { "type" : "float" }, 
-					"last": { "type" : "float" }, 
-					"sell": { "type" : "float" }, 
-					"amount": { "type" : "float" }, 
-					"volume": { "type" : "float" }, 
-					"contractId": { "type" : "string", "index": "not_analyzed" }
-				}
-			}
-		}
 
 		okCoinCompletedTradeMapping = { 
 			"ok_coin_completed_trade": {
@@ -154,6 +138,37 @@ def createMappings(es, indexName):
 			}
 		}
 
+		# ok_btcusd_future_ticker_this_week BTC Future Market Price(this week)
+		# ok_btcusd_future_ticker_next_week BTC Future Market Price(next week)
+		# ok_btcusd_future_ticker_quarter BTC Future Market Price(quarter)
+  #       "buy":397.34,
+	 #    "contractId":20141226034,
+		# "high":406.09,
+		# "last":397.62,
+		# "low":392.59,
+		# "sell":398.01,
+		# "unitAmount":100,
+		# "volume":98288
+
+		okcoinFutureTickerMapping = { 
+			"ok_btcusd_future_ticker": { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no" }, 
+					"date" : { "type": "date" }, 
+					"contract_type" : { "type": "string"}, 
+					"contract_id" : { "type": "string", "index": "not_analyzed"}, 
+					"buy" : {"type": "float"}, 
+					"high" : {"type": "float"}, 
+					"last" : {"type": "float"}, 
+					"low" : {"type": "float"}, 
+					"sell" : {"type": "float"}, 
+					"hold_amount": {"type": "float"}, 
+					"unit_amount" : {"type": "float"}, 
+					"volume" : {"type": "float"}
+				} 
+			} 
+		}
+
 		tickerIndex = "btc_tickers"
 		orderBookIndex = "btc_orderbooks"
 		completedTradesIndex = "btc_completed_trades"
@@ -170,7 +185,7 @@ def createMappings(es, indexName):
 		es.indices.put_mapping(index=orderBookIndex, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
 		es.indices.put_mapping(index=completedTradesIndex, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
 		es.indices.put_mapping(index=completedTradesIndex, doc_type="ok_coin_completed_trade", body=okCoinCompletedTradeMapping)
-		es.indices.put_mapping(index=futuresIndex, doc_type="ok_coin_futures_this_week", body=okCoinFutureThisWeekMapping)
+		es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_ticker", body=okcoinFutureTickerMapping)
 		es.indices.put_mapping(index=candlestickIndex, doc_type="ok_coin_candlestick", body=okcoinCandleStickMapping)
 		mappingCreated = True
 	except elasticsearch.exceptions.RequestError: 

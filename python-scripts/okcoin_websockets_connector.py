@@ -20,6 +20,7 @@ DEFAULT_INDEX_NAME = "btcwebsockettickerarchive"
 
 CANDLE_LIST = [ "ok_btcusd_kline_1min", "ok_btcusd_kline_3min", "ok_btcusd_kline_5min", "ok_btcusd_kline_15min", "ok_btcusd_kline_30min", "ok_btcusd_kline_1hour", "ok_btcusd_kline_2hour", "ok_btcusd_kline_4hour", "ok_btcusd_kline_6hour", "ok_btcusd_kline_12hour", "ok_btcusd_kline_day", "ok_btcusd_kline_3day", "ok_btcusd_kline_week" ] 
 
+FUTURES_CONTRACT_TYPES = ["ok_btcusd_future_ticker_this_week", "ok_btcusd_future_ticker_next_week", "ok_btcusd_future_ticker_quarter"]
 
 es = None
 
@@ -46,11 +47,13 @@ def on_open(self):
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
 
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
 	jsonData = getJsonData(okcoinData)
-	print(jsonData)
 	for item in jsonData: 
 		curChannel = item["channel"]
 		if curChannel == "ok_btcusd_ticker": 
@@ -61,16 +64,46 @@ def on_message(self, event):
 			processCompletedTrades(jsonData)
 		elif curChannel in CANDLE_LIST: 
 			processCandleStick(curChannel, item)
+		elif curChannel in FUTURES_CONTRACT_TYPES: 
+			processTheFuture(curChannel, item) 
 		else: 
 			print("WTF")
 	print("-----") 
 
 	pass
+def processTheFuture(futureType, jsonData): 
+	futureData = jsonData["data"] 
+
+	futureRegex = re.search("ok_btcusd_future_ticker_(.+)", futureType)
+	futureType = futureRegex.group(1)
+	# {'vol': '696068.00', 'high': 471.64, 'contractId': '20160325012', 'low': 461.74, 'buy': 464.68, 'last': '464.68', 'hold_amount': 235764, 'unitAmount': 100, 'sell': 464.76}
+	futureDto = {}
+	uniqueId = uuid.uuid4()
+	recordDate = datetime.datetime.now(TIMEZONE)
+	futureDto["uuid"] = str(uniqueId) 
+	futureDto["date"] = recordDate
+	futureDto["volume"] = float(futureData["vol"])
+	futureDto["high"] = float(futureData["high"]) 
+	futureDto["contract_id"] = str(futureData["contractId"]) 
+	futureDto["low"] = float(futureData["low"]) 
+	futureDto["buy"] = float(futureData["buy"]) 
+	futureDto["last"] = float(futureData["last"]) 
+	futureDto["hold_amount"] = float(futureData["hold_amount"]) 
+	futureDto["unit_amount"] = float(futureData["unitAmount"]) 
+	futureDto["sell"] = float(futureData["sell"]) 
+	futureDto["contract_type"] = str(futureType)
+
+def createTheFuture(): 
+	putNewDocumentRequest = es.create(index="btc_orderbooks", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
+	successful = putNewDocumentRequest["created"]
+	if successful == True: 
+		print("WEBSOCKET ENTRY FOR " + doctype + " ADDED TO ES CLUSTER")
+	else: 
+		print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
 
 def processCandleStick(candleType, jsonData): 
 	dataObj = jsonData["data"]
 	dataPoint = dataObj
-	print("candlestick...")
 	if len(dataPoint) == 6: 
 		print(dataPoint)
 		candleDto = {}
@@ -103,37 +136,25 @@ def processCompletedTrades(jsonData):
 		if "data" in item: 
 			curData = item["data"]
 			for curOrder in curData: 
-				completedTradeDto = {}
-				asiaTimeZone = pytz.timezone("Asia/Shanghai")
-				dateRecv = datetime.datetime.strptime(curOrder[3], "%H:%M:%S")
-				theHour = dateRecv.hour
-				theMinute = dateRecv.minute
-				theSecond = dateRecv.second
-				dateOccurred = dateRecv.replace(year=datetime.datetime.now(timezone("Asia/Shanghai")).year, month=datetime.datetime.now(timezone("Asia/Shanghai")).month, day=datetime.datetime.now(timezone("Asia/Shanghai")).day, hour=theHour, minute=theMinute, second=theSecond)
-				delta = timedelta(hours=8)
-				realDate = dateOccurred - delta
-				now_aware = pytz.utc.localize(realDate)
-
-				theId = str(curOrder[0])
-				thePrice = float(curOrder[1])
-				theAmount = float(curOrder[2])
-				theType = str(curOrder[4])
-				completedTradeDto["uuid"] = uniqueId
-				completedTradeDto["date"] = now_aware
-				completedTradeDto["tradeId"] = theId
-				completedTradeDto["timestamp"] = None
-				completedTradeDto["amount"] = theAmount
-				completedTradeDto["order_type"] = theType
-
-				print (completedTradeDto)
-				
-				putNewDocumentRequest = es.create(index="btc_completed_trades", doc_type='ok_coin_completed_trade', ignore=[400], id=uuid.uuid4(), body=completedTradeDto)	
-				successful = putNewDocumentRequest["created"]
-				if successful == True: 
-					print("OKCOIN COMPLETED ORDER DATA STORED.")
-				else: 
-					print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
-				pass
+				if type(curOrder) is list: 
+					completedTradeDto = {}
+					theId = str(curOrder[0])
+					thePrice = float(curOrder[1])
+					theAmount = float(curOrder[2])
+					theType = str(curOrder[4])
+					completedTradeDto["uuid"] = uniqueId
+					completedTradeDto["date"] = datetime.datetime.utcnow()
+					completedTradeDto["tradeId"] = theId
+					completedTradeDto["timestamp"] = str(curOrder[3])
+					completedTradeDto["amount"] = theAmount
+					completedTradeDto["order_type"] = theType				
+					putNewDocumentRequest = es.create(index="btc_completed_trades", doc_type='ok_coin_completed_trade', ignore=[400], id=uuid.uuid4(), body=completedTradeDto)	
+					successful = putNewDocumentRequest["created"]
+					if successful == True: 
+						print("OKCOIN COMPLETED ORDER DATA STORED.")
+					else: 
+						print("!! FATAL !!: WEBSOCKET ENTRY NOT ADDED TO ES CLUSTER")
+					pass
 
 def processOrderbook(self, event, okcoinData): 	
 	if "data" in okcoinData: 
