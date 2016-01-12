@@ -145,6 +145,7 @@ def processCompletedTrades(jsonData):
 					theType = str(curOrder[4])
 					completedTradeDto["uuid"] = uniqueId
 					completedTradeDto["date"] = datetime.datetime.utcnow()
+					completedTradeDto["price"] = thePrice
 					completedTradeDto["tradeId"] = theId
 					completedTradeDto["timestamp"] = str(curOrder[3])
 					completedTradeDto["amount"] = theAmount
