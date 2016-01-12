@@ -142,11 +142,12 @@ def processCompletedTrades(jsonData):
 					theId = str(curOrder[0])
 					thePrice = float(curOrder[1])
 					theAmount = float(curOrder[2])
-
-					if theAmount < 0: 
-						theAmount = theAmount * -1
-						
 					theType = str(curOrder[4])
+
+					theType = theType.upper() 
+					if theType == "ASK": 
+						theAmount = theAmount * -1
+
 					completedTradeDto["uuid"] = uniqueId
 					completedTradeDto["date"] = datetime.datetime.utcnow()
 					completedTradeDto["price"] = thePrice
