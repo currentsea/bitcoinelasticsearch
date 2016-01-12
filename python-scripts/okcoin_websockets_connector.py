@@ -31,25 +31,26 @@ def getJsonData(okcoinData):
 	return jsonData
 
 def on_open(self):
-	self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-	self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
-	self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
-	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
-	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
-	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
+	# self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
+	# self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
@@ -66,11 +67,28 @@ def on_message(self, event):
 			processCandleStick(curChannel, item)
 		elif curChannel in FUTURES_CONTRACT_TYPES: 
 			processTheFuture(curChannel, item) 
+		elif curChannel == "ok_btcusd_future_index": 
+			indexTheFuture(curChannel, item)
 		else: 
 			print("WTF")
 	print("-----") 
-
 	pass
+
+def indexTheFuture(futureChannel, futureData):
+	data = futureData["data"] 
+	uniqueId = uuid.uuid4()
+	futureIndexDto = {}
+	# futureIndex: current futures index price
+	# timestamp: 
+	theDate = datetime.datetime.fromtimestamp(float(data["timestamp"]) / 1000, TIMEZONE)
+	thePrice = float(data["futureIndex"])
+	futureIndexDto = {}
+	futureIndexDto["uuid"] = str(uniqueId)
+	futureIndexDto["date"] = theDate
+	futureIndexDto["price"] = thePrice
+	futureIndexDto["timestamp"] = str(data["timestamp"])
+	createTheFuture("btc_futures", "ok_btcusd_future_index", futureIndexDto)
+
 def processTheFuture(futureType, jsonData): 
 	futureData = jsonData["data"] 
 

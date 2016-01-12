@@ -168,7 +168,16 @@ def createMappings(es, indexName):
 				} 
 			} 
 		}
-
+		okcoinFutureIndexMapping = { 
+			"ok_btcusd_future_index": { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no" }, 
+					"date" : { "type": "date" }, 	
+					"timestamp" : {"type": "string", "index": "no"}, 
+					"price": { "type": "float"}	
+				}
+			} 
+		}
 		tickerIndex = "btc_tickers"
 		orderBookIndex = "btc_orderbooks"
 		completedTradesIndex = "btc_completed_trades"
@@ -187,6 +196,7 @@ def createMappings(es, indexName):
 		es.indices.put_mapping(index=completedTradesIndex, doc_type="ok_coin_completed_trade", body=okCoinCompletedTradeMapping)
 		es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_ticker", body=okcoinFutureTickerMapping)
 		es.indices.put_mapping(index=candlestickIndex, doc_type="ok_coin_candlestick", body=okcoinCandleStickMapping)
+		es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_index", body=okcoinFutureIndexMapping)
 		mappingCreated = True
 	except elasticsearch.exceptions.RequestError: 
 		pass
