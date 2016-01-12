@@ -92,9 +92,10 @@ def processTheFuture(futureType, jsonData):
 	futureDto["unit_amount"] = float(futureData["unitAmount"]) 
 	futureDto["sell"] = float(futureData["sell"]) 
 	futureDto["contract_type"] = str(futureType)
-
-def createTheFuture(): 
-	putNewDocumentRequest = es.create(index="btc_orderbooks", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
+	createTheFuture(curChannel, "ok_btcusd_future_ticker", futureDto)
+	
+def createTheFuture(index, doctype, data): 
+	putNewDocumentRequest = es.create(index=index, doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=data)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
 		print("WEBSOCKET ENTRY FOR " + doctype + " ADDED TO ES CLUSTER")
