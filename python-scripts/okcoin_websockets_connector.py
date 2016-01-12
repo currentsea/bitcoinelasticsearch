@@ -30,9 +30,9 @@ def getJsonData(okcoinData):
 	return jsonData
 
 def on_open(self):
-	# self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-	# self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
-	# self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+	self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
@@ -46,16 +46,6 @@ def on_open(self):
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
 	self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-
-## TODO
-# Request 
-# {'event':'addChannel','channel':'ok_btcusd_trades_v1'}
-# Response
-# [{
-#   "channel":"ok_btcusd_trades_v1",
-#   "data":[["1001","2463.86","0.052","16:34:07","ask"]]
-# }]
-
 
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
@@ -78,25 +68,7 @@ def on_message(self, event):
 	pass
 
 def processCandleStick(candleType, jsonData): 
-	# btc_candlesticks is index
-	# ok_coin_candlestick is doctype 
 	dataObj = jsonData["data"]
-# okcoinCandleStickMapping = { 
-# 			"ok_coin_candlestick": {  
-# 				"properties": { 
-# 					"uuid": { "type": "string", "index": "no" }, 
-# 					"date" : { "type": "date" }, 
-# 					"candle_type" : { "type": "string"}, 
-# 					"timestamp": {"type": "string", "index": "no"},
-# 					"open_price": { "type" : "float" }, 
-# 					"highest_price": { "type" : "float" }, 
-# 					"lowest_price": { "type" : "float" }, 
-# 					"close_price": { "type" : "float" }, 
-# 					"volume": { "type" : "float" }
-# 				}
-# 			}
-# 		}
-	# return data format:[time, open price, highest price, lowest price, close price, volume]
 	dataPoint = dataObj
 	print("candlestick...")
 	if len(dataPoint) == 6: 
@@ -133,24 +105,14 @@ def processCompletedTrades(jsonData):
 			for curOrder in curData: 
 				completedTradeDto = {}
 				asiaTimeZone = pytz.timezone("Asia/Shanghai")
-				# os.environ["TZ"] = "Asia/Shanghai"
-				# time.tzset()
 				dateRecv = datetime.datetime.strptime(curOrder[3], "%H:%M:%S")
 				theHour = dateRecv.hour
 				theMinute = dateRecv.minute
 				theSecond = dateRecv.second
 				dateOccurred = dateRecv.replace(year=datetime.datetime.now(timezone("Asia/Shanghai")).year, month=datetime.datetime.now(timezone("Asia/Shanghai")).month, day=datetime.datetime.now(timezone("Asia/Shanghai")).day, hour=theHour, minute=theMinute, second=theSecond)
-				fuckingit = timedelta(hours=8)
-
-				# localDate = utcTz.localize(dateOccurred, is_dst=None).astimezone(pytz.utc)
-				# [tid, price, amount, time, type]
-
-				# fuckingtimebullshit = timedelta(hours=8)
-
-				realDate = dateOccurred - fuckingit
-
+				delta = timedelta(hours=8)
+				realDate = dateOccurred - delta
 				now_aware = pytz.utc.localize(realDate)
-
 
 				theId = str(curOrder[0])
 				thePrice = float(curOrder[1])
@@ -193,6 +155,8 @@ def processOrderbook(self, event, okcoinData):
 			okcoinOrderDto["uuid"] = str(uniqueId)
 			okcoinOrderDto["date"] = dateRecv
 			okcoinOrderDto["price"] = float(order[0])
+
+			# Amount is appended to be negative to keep conformity with bitfinex data 
 			okcoinOrderDto["amount"] = float(order[1] * -1)
 			okcoinOrderDto["order_type"] = "ASK" 
 			addOrderBookItem(self, event, okcoinOrderDto, "okcoin_order_book")
@@ -252,7 +216,7 @@ def inflate(okcoinData):
     return inflatedData
 
 def on_error(self, event):
-	print('EVENT IS: ') 
+	print('ERROR IS: ') 
 	print (event)
 
 def on_close(self, event):
