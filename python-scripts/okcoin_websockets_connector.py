@@ -24,6 +24,17 @@ FUTURES_CONTRACT_TYPES = ["ok_btcusd_future_ticker_this_week", "ok_btcusd_future
 
 es = None
 
+def getArgs(): 
+	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
+	parser.add_argument('--host', action='store_true', default=False)
+	parser.add_argument('--forever', action='store_true', default=False)
+	parser.add_argument('--max_records', action='store_true', default=3600)
+
+	# TODO: add more params here
+
+	args = parser.parse_args()
+	return args
+
 def getJsonData(okcoinData):
 	tempData = okcoinData
 	dataStr = tempData.decode(encoding='UTF-8')
@@ -269,6 +280,11 @@ def on_close(self, event):
     print (event)
 
 if __name__ == "__main__":
+	args = getArgs() 
+	if (args.host): 
+		hostStrip = args.host
+		hostStrip = hostStrip.strip()
+		ELASTICSEARCH_HOST = hostStrip
 	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
 	createMappings(es, DEFAULT_INDEX_NAME)
 	websocket.enableTrace(False)

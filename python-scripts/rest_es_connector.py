@@ -39,6 +39,7 @@ OKCOIN_BTCUSD_TICKER_REST_URL = OKCOIN_REST_API_URL + "/ticker.do?symbol=btc_usd
 
 def getArgs(): 
 	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
+	parser.add_argument('--host', action='store_true', default=False)
 	parser.add_argument('--forever', action='store_true', default=False)
 	parser.add_argument('--max_records', action='store_true', default=3600)
 
