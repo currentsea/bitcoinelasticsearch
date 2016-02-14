@@ -71,7 +71,7 @@ def getOrderBookDto(orderBookData, uniqueId, recordDate):
 	elif (len(orderBookData) == 3): 
 		offSet = 0
 	else: 
-		print "pass --" 
+		print ("pass --")
 		pass
 
 	thePrice = orderBookData[0 + offSet]
