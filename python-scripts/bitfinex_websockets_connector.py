@@ -18,6 +18,8 @@ ELASTICSEARCH_HOST = "http://localhost:9200"
 
 BITFINEX_WEBSOCKETS_URL = "wss://api2.bitfinex.com:3000/ws"
 
+
+
 def getCompletedTradeDto(completedTrade, uniqueId, recordDate): 
 	tradeDto = {}
 	tradeDto["date"] = recordDate
@@ -69,7 +71,8 @@ def getOrderBookDto(orderBookData, uniqueId, recordDate):
 	elif (len(orderBookData) == 3): 
 		offSet = 0
 	else: 
-		raise IOError("Invalid orderbook passed to injectOrderBookDto")
+		print "pass --" 
+		pass
 
 	thePrice = orderBookData[0 + offSet]
 	orderDto["uuid"] = uniqueId
