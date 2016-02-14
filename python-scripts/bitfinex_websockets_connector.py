@@ -225,7 +225,7 @@ def processTradeChannelData(es, result, uniqueId, recordDate):
 		else: 
 			theData = result
 			dataLength = len(theData[1:])
-			if dataLength == 4: 
+			if dataLength == 5: 
 				tradeDto = getCompletedTradeDto(theData[1:], uniqueId, recordDate) 
 				injectCompletedTrade(es, tradeDto)
 			else: 
