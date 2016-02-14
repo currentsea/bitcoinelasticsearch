@@ -231,8 +231,8 @@ def processTradeChannelData(es, result, uniqueId, recordDate):
 			else: 
 				print("!!! fatal !!!")
 				print(theData)
-				raise IOError("Trades length was not == 4")
-
+				pass 
+				
 if __name__ == "__main__": 
 	run()
 	
