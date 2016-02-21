@@ -180,7 +180,6 @@ def run():
 		# Channel the FORCE
 		if "channel" in result: 
 			channel = result["channel"]
-			print "CHANNEL IS " + str(channel)
 			if channel == "book": 
 				bookChannel = result["chanId"]
 				print("BOOK CHANNEL " + str(bookChannel))
