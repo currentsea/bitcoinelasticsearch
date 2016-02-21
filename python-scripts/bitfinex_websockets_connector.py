@@ -171,8 +171,11 @@ def run():
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uniqueId = str(uuid.uuid4())
 		result = ws.recv()
-		result = json.loads(result)
-		curChannel = result[0]
+		try: 
+			result = json.loads(result)
+			curChannel = result[0]
+		except: 
+			result = ""
 
 		if curChannel == bookChannel: 
 			if len(result) == 2: 
