@@ -18,6 +18,16 @@ ELASTICSEARCH_HOST = "http://localhost:9200"
 
 BITFINEX_WEBSOCKETS_URL = "wss://api2.bitfinex.com:3000/ws"
 
+def getArgs(): 
+	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
+	parser.add_argument('--host')
+	parser.add_argument('--forever', action='store_true', default=False)
+	parser.add_argument('--max_records', action='store_true', default=3600)
+
+	# TODO: add more params here
+
+	args = parser.parse_args()
+	return args
 
 
 def getCompletedTradeDto(completedTrade, uniqueId, recordDate): 
@@ -237,5 +247,8 @@ def processTradeChannelData(es, result, uniqueId, recordDate):
 				pass 
 				
 if __name__ == "__main__": 
+	args = getArgs()
+	if (args.host): 
+		ELASTICSEARCH_HOST = args.host
 	run()
 	
