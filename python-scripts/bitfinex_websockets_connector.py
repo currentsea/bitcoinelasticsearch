@@ -26,9 +26,9 @@ def getCompletedTradeDto(completedTrade, uniqueId, recordDate):
 	tradeDto["uuid"] = uniqueId
 	tradeDto["tradeId"] = str(completedTrade[0])
 	tradeDto["timestamp"] = str(completedTrade[1])
-	tradeDto["price"] = float(completedTrade[2]) 
+	tradeDto["price"] = float(completedTrade[3]) 
 
-	tradeAmount = float(completedTrade[3])
+	tradeAmount = float(completedTrade[2])
 	if tradeAmount < 0: 
 		orderType = "ASK"
 	else: 
