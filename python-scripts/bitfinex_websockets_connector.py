@@ -232,7 +232,6 @@ def run():
 				print(result) 
 
 		elif curChannel == tradeChannel: 
-			print "WE ARE IN THE TRADES CHANNEL...."
 			processTradeChannelData(es, result, uniqueId, recordDate)
 
 		else: 
@@ -241,8 +240,6 @@ def run():
 	ws.close()
 
 def processTradeChannelData(es, result, uniqueId, recordDate): 
-	print "PROCESSING TRADE CHANNEL RESULTS... " 
-	print result 
 	if (result[1] == 'hb'): 
 		#print("TRADES HEARTBEAT!") 
 		pass
