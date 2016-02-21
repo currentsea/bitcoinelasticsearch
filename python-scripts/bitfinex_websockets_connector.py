@@ -33,7 +33,6 @@ def getArgs():
 def getCompletedTradeDto(completedTrade, uniqueId, recordDate): 
 	tradeDto = {}
 
-	print completedTrade
 	tradeDto["uuid"] = uniqueId
 	tradeDto["date"] = recordDate
 	if len(completedTrade) == 4: 
@@ -151,19 +150,19 @@ def run():
 	mappings = createMappings(es, DEFAULT_INDEX_NAME) 
 	print("MAPPINGS CREATED: " + str(mappings))
 	ws = create_connection(BITFINEX_WEBSOCKETS_URL)
-	# ws.send(json.dumps({
-	#     "event": "subscribe",
-	#     "channel": "ticker",
-	#     "pair": "BTCUSD"
-	# }))
+	ws.send(json.dumps({
+	    "event": "subscribe",
+	    "channel": "ticker",
+	    "pair": "BTCUSD"
+	}))
 
-	# ws.send(json.dumps({
-	# 	"event": "subscribe",
-	#     "channel": "book",
-	#     "pair": "BTCUSD",
-	#     "prec": "P0",
-	#     "len":"100"	
-	# }))
+	ws.send(json.dumps({
+		"event": "subscribe",
+	    "channel": "book",
+	    "pair": "BTCUSD",
+	    "prec": "P0",
+	    "len":"100"	
+	}))
 
 	ws.send(json.dumps({ 
 	    "event": "subscribe",
@@ -175,7 +174,7 @@ def run():
 	tickerChannel = None
 	tradeChannel = None
 
-	while (tradeChannel == None):
+	while (tickerChannel == None or bookChannel == None or tradeChannel == None):
 		result = ws.recv()
 		result = json.loads(result)
 		# Channel the FORCE
