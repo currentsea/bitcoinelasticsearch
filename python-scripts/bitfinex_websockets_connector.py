@@ -3,7 +3,7 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import json, uuid, datetime, pytz, elasticsearch
+import json, uuid, datetime, pytz, elasticsearch, argparse
 from websocket import create_connection
 from create_mappings import createMappings
 
