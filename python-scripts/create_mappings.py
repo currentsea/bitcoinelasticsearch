@@ -91,14 +91,9 @@ def createMappings(es, indexName):
 		bitfinexCompletedTradeMapping = { 
 			"bitfinex_completed_trade": { 
 				"properties": { 
-
-					# 		SEQ	string	Trade sequence id
-					# TIMESTAMP	int	Unix timestamp of the trade.
-					# PRICE	float	Price at which the trade was executed
-					# AMOUNT	float	How much was bought (positive) or sold (negative).
-					# The order that causes the trade determines if it is a buy or a sell.
 					"uuid": { "type": "string", "index": "no" }, 
 					"date" : { "type": "date" }, 
+					"sequenceId": { "type" : "string", "index":"not_analyzed"}, 
 					"tradeId" : { "type" : "string", "index":"not_analyzed"}, 
 					"timestamp": {"type": "string", "index": "no"},
 					"price": {"type": "float"}, 
@@ -137,18 +132,6 @@ def createMappings(es, indexName):
 				}
 			}
 		}
-
-		# ok_btcusd_future_ticker_this_week BTC Future Market Price(this week)
-		# ok_btcusd_future_ticker_next_week BTC Future Market Price(next week)
-		# ok_btcusd_future_ticker_quarter BTC Future Market Price(quarter)
-  #       "buy":397.34,
-	 #    "contractId":20141226034,
-		# "high":406.09,
-		# "last":397.62,
-		# "low":392.59,
-		# "sell":398.01,
-		# "unitAmount":100,
-		# "volume":98288
 
 		okcoinFutureTickerMapping = { 
 			"ok_btcusd_future_ticker": { 
@@ -206,4 +189,4 @@ def createIndex(es, name):
 	try: 
 		es.indices.create(name)
 	except: 
-		raise
+		pass

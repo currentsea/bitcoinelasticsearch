@@ -32,19 +32,35 @@ def getArgs():
 
 def getCompletedTradeDto(completedTrade, uniqueId, recordDate): 
 	tradeDto = {}
-	tradeDto["date"] = recordDate
-	tradeDto["uuid"] = uniqueId
-	tradeDto["tradeId"] = str(completedTrade[0])
-	tradeDto["timestamp"] = str(completedTrade[1])
-	tradeDto["price"] = float(completedTrade[3]) 
 
-	tradeAmount = float(completedTrade[2])
-	if tradeAmount < 0: 
-		orderType = "ASK"
+	print completedTrade
+	tradeDto["uuid"] = uniqueId
+	tradeDto["date"] = recordDate
+	if len(completedTrade) == 4: 
+		tradeDto["tradeId"] = str(completedTrade[0])
+		tradeDto["timestamp"] = str(completedTrade[1])
+		tradeDto["price"] = float(completedTrade[2]) 
+		theAmount = float(completedTrade[3])
+		tradeDto["amount"] = theAmount
+		
+	elif len(completedTrade) == 5: 
+		tradeDto["tradeId"] = str(completedTrade[1])
+		tradeDto["timestamp"] = str(completedTrade[2])
+		tradeDto["price"] = float(completedTrade[3]) 
+		theAmount = float(completedTrade[4]) 
+		tradeDto["amount"] = theAmount
+
+	elif len(completedTrade) == 6: 
+		tradeDto["sequenceId"] = str(completedTrade[1])
+		tradeDto["tradeId"] = str(completedTrade[2])
+		tradeDto["timestamp"] = str(completedTrade[3])
+		tradeDto["price"] = float(completedTrade[4]) 
+		theAmount = float(completedTrade[5]) 
+
+	if theAmount < 0: 
+		tradeDto["order_type"] = "ASK"
 	else: 
-		orderType = "BID" 
-	tradeDto["amount"] = tradeAmount
-	tradeDto["order_type"] = orderType
+		tradeDto["order_type"] = "BID"
 	return tradeDto
 
 def getTickerDto(tickerData, uniqueId, recordDate): 
@@ -135,19 +151,19 @@ def run():
 	mappings = createMappings(es, DEFAULT_INDEX_NAME) 
 	print("MAPPINGS CREATED: " + str(mappings))
 	ws = create_connection(BITFINEX_WEBSOCKETS_URL)
-	ws.send(json.dumps({
-	    "event": "subscribe",
-	    "channel": "ticker",
-	    "pair": "BTCUSD"
-	}))
+	# ws.send(json.dumps({
+	#     "event": "subscribe",
+	#     "channel": "ticker",
+	#     "pair": "BTCUSD"
+	# }))
 
-	ws.send(json.dumps({
-		"event": "subscribe",
-	    "channel": "book",
-	    "pair": "BTCUSD",
-	    "prec": "P0",
-	    "len":"100"	
-	}))
+	# ws.send(json.dumps({
+	# 	"event": "subscribe",
+	#     "channel": "book",
+	#     "pair": "BTCUSD",
+	#     "prec": "P0",
+	#     "len":"100"	
+	# }))
 
 	ws.send(json.dumps({ 
 	    "event": "subscribe",
@@ -159,12 +175,13 @@ def run():
 	tickerChannel = None
 	tradeChannel = None
 
-	while (bookChannel == None or tickerChannel == None or tradeChannel == None):
+	while (tradeChannel == None):
 		result = ws.recv()
 		result = json.loads(result)
 		# Channel the FORCE
 		if "channel" in result: 
 			channel = result["channel"]
+			print "CHANNEL IS " + str(channel)
 			if channel == "book": 
 				bookChannel = result["chanId"]
 				print("BOOK CHANNEL " + str(bookChannel))
@@ -217,6 +234,7 @@ def run():
 				print(result) 
 
 		elif curChannel == tradeChannel: 
+			print "WE ARE IN THE TRADES CHANNEL...."
 			processTradeChannelData(es, result, uniqueId, recordDate)
 
 		else: 
@@ -225,6 +243,8 @@ def run():
 	ws.close()
 
 def processTradeChannelData(es, result, uniqueId, recordDate): 
+	print "PROCESSING TRADE CHANNEL RESULTS... " 
+	print result 
 	if (result[1] == 'hb'): 
 		#print("TRADES HEARTBEAT!") 
 		pass
@@ -238,7 +258,7 @@ def processTradeChannelData(es, result, uniqueId, recordDate):
 		else: 
 			theData = result
 			dataLength = len(theData[1:])
-			if dataLength == 5: 
+			if dataLength == 5 or dataLength == 6: 
 				tradeDto = getCompletedTradeDto(theData[1:], uniqueId, recordDate) 
 				injectCompletedTrade(es, tradeDto)
 			else: 
