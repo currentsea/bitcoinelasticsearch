@@ -46,15 +46,16 @@ def createMappings(es, indexName):
 				"properties": { 
 					"uuid": { "type": "string", "index": "no"}, 
 					"date": {"type":"date"}, 
-					"orders" : { 
-		                "type" : "nested",
-		                "properties": { 
-							"price": { "type": "float"},
-							"amount": {"type": "float"}, 
-							"count": {"type": "float"}, 
-							"order_type": {"type": "string"} 
-		                }
-					}
+					"price": { "type": "float"},
+					"amount": {"type": "float"}, 
+					"count": {"type": "float"}, 
+					"order_type": {"type": "string"} 
+					# "orders" : { 
+		   #              "type" : "nested",
+		   #              "properties": { 
+
+		   #              }
+					# }
 					# "largest_bid_order_weighted_by_volume"
 					# "largest_ask_order_weighted_by_volume"
 					# "largest_order_by_volume" 
@@ -70,14 +71,9 @@ def createMappings(es, indexName):
 				"properties": { 
 					"uuid": { "type": "string", "index": "no"}, 
 					"date": {"type":"date"}, 
-					"orders" : { 
-		                "type" : "nested",
-		                "properties": { 
-							"price": { "type": "float"},
-							"amount": {"type": "float"}, 
-							"order_type" : { "type": "string"} 
-		                }
-					}
+					"price": { "type": "float"},
+					"amount": {"type": "float"}, 
+					"order_type" : { "type": "string"} 
 					# "largest_bid_order_weighted_by_volume"
 					# "largest_ask_order_weighted_by_volume"
 					# "largest_order_by_volume" 
@@ -162,27 +158,27 @@ def createMappings(es, indexName):
 			} 
 		}
 		tickerIndex = "btc_tickers"
-		orderBookIndex = "btc_orderbooks"
+		orderBookIndex = "btc_orderbooks_live"
 		completedTradesIndex = "btc_completed_trades"
 		futuresIndex = "btc_futures"
 		candlestickIndex = "btc_candlesticks"
-		createIndex(es, tickerIndex)
+		# createIndex(es, tickerIndex)
 		createIndex(es, orderBookIndex) 
-		createIndex(es, completedTradesIndex)
-		createIndex(es, futuresIndex)
-		createIndex(es, candlestickIndex)
-		es.indices.put_mapping(index=tickerIndex, doc_type="bitfinex_ticker", body=bitfinexTickerMapping)
-		es.indices.put_mapping(index=tickerIndex, doc_type="okcoin_ticker", body=okcoinTickerMapping)
+		# createIndex(es, completedTradesIndex)
+		# createIndex(es, futuresIndex)
+		# createIndex(es, candlestickIndex)
+		# es.indices.put_mapping(index=tickerIndex, doc_type="bitfinex_ticker", body=bitfinexTickerMapping)
+		# es.indices.put_mapping(index=tickerIndex, doc_type="okcoin_ticker", body=okcoinTickerMapping)
 		es.indices.put_mapping(index=orderBookIndex, doc_type="bitfinex_order_book", body=bitfinexOrderBookMapping)
 		es.indices.put_mapping(index=orderBookIndex, doc_type="okcoin_order_book", body=okcoinOrderBookMapping)
-		es.indices.put_mapping(index=completedTradesIndex, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
-		es.indices.put_mapping(index=completedTradesIndex, doc_type="ok_coin_completed_trade", body=okCoinCompletedTradeMapping)
-		es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_ticker", body=okcoinFutureTickerMapping)
-		es.indices.put_mapping(index=candlestickIndex, doc_type="ok_coin_candlestick", body=okcoinCandleStickMapping)
-		es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_index", body=okcoinFutureIndexMapping)
+		# es.indices.put_mapping(index=completedTradesIndex, doc_type="bitfinex_completed_trade", body=bitfinexCompletedTradeMapping)
+		# es.indices.put_mapping(index=completedTradesIndex, doc_type="ok_coin_completed_trade", body=okCoinCompletedTradeMapping)
+		# es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_ticker", body=okcoinFutureTickerMapping)
+		# es.indices.put_mapping(index=candlestickIndex, doc_type="ok_coin_candlestick", body=okcoinCandleStickMapping)
+		# es.indices.put_mapping(index=futuresIndex, doc_type="ok_btcusd_future_index", body=okcoinFutureIndexMapping)
 		mappingCreated = True
-	except elasticsearch.exceptions.RequestError: 
-		pass
+	except: 
+		raise
 	return mappingCreated
 
 def createIndex(es, name): 

@@ -222,7 +222,7 @@ def processOrderbook(self, event, okcoinData):
 
 
 def addOrderBookItem(self, event, dto, doctype): 
-	putNewDocumentRequest = es.create(index="btc_orderbooks", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
+	putNewDocumentRequest = es.create(index="btc_orderbooks_live", doc_type=doctype, ignore=[400], id=uuid.uuid4(), body=dto)
 	successful = putNewDocumentRequest["created"]
 	if successful == True: 
 		print("WEBSOCKET ENTRY FOR " + doctype + " ADDED TO ES CLUSTER")
