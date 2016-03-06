@@ -5,7 +5,7 @@
 
 import argparse, hmac, hashlib, time, json, urllib, urllib2, requests, pytz, elasticsearch, poloinex, uuid, datetime
 from time import sleep
-ELASTICSEARCH_HOST = "http://127.0.0.1:9200" 
+ELASTICSEARCH_HOST = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com/" 
 
 def getArgs(): 
 	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
@@ -65,18 +65,7 @@ def putMapping(es, indexName, docType):
 		}  
 		es.indices.put_mapping(index=indexName, doc_type=docType, body=pnexTickersMapping)
 	except: 
-		#print ("MAPPING NOT UPDATED FOR " + indexName + " ON DOCTYPE poloinex")
 		raise 
-
-# def injectOrderBook(es, orderbook, uniqueId, recordDate, indexName="btc_orderbooks_live", docType="bitfinex_order_book"): 
-	# for item in orderbook: 
-	# 	orderDto = getOrderBookDto(item, uniqueId, recordDate)
-	# 	successful = putNewDocumentRequest["created"]
-	# 	if successful == True: 
-	# 		print("[INDEX: " + indexName + "] [DOCTYPE: " + docType + "] Updated: " + uniqueId)  
-	# 	else: 
-	# 		print("ES Entry failed to POST: " + uniqueId)  
-
 
 def injectData(es, indexName, docType, docBody, conDocs): 	
 	putNewDocumentRequest = es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=docBody)
@@ -92,7 +81,7 @@ if __name__ == "__main__":
 	docType = "poloinex_ticker"
 	#print args.host
 	conDocs = 0
-	es = elasticsearch.Elasticsearch(args.host, verify_certs=False) 
+	es = elasticsearch.Elasticsearch(args.host, verify_certs=True) 
 	createIndex(es, indexName) 
 	putMapping(es, indexName, docType) 
 	connector = poloinex.poloniex("", "")
