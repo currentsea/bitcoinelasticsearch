@@ -73,7 +73,8 @@ def putMapping(es, indexName, docType):
 					"date": {"type": "date"},
 					"order_type": { "type": "string"},
 					"volume": { "type": "float"}, 
-					"absolute_volume": { "type": "float"} 
+					"absolute_volume": { "type": "float"}, 
+					"price" : {"type":"float"}
 				} 
 			} 
 		}  

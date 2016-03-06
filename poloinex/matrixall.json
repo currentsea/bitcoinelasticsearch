@@ -1,0 +1,111 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/*",
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": [
+            "73.25.10.90/32",
+            "52.27.58.116",
+            "52.33.106.254",
+            "52.36.97.141",
+            "52.36.244.42",
+            "52.35.22.230",
+            "52.36.244.42",
+            "52.11.184.7",
+            "52.34.137.56",
+            "52.27.12.219",
+            "52.11.218.14"
+          ]
+        }
+      }
+    }, 
+    {
+      "Sid": "HTTPS-GET-ALL-INTERNAL-LBS",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpGet",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/*"
+
+    }, 
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpHead",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/*"
+
+    }, 
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPut",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain"
+
+    }, 
+    {
+      "Sid": "",
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPut",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain/config"
+
+    },
+    {
+      "Sid": "",
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPut",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain/index-pattern"
+
+    },  
+     {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPost",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain"
+
+    },
+     {
+      "Sid": "",
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPost",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain/config"
+
+    },                   
+    {
+      "Sid": "",
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:ESHttpPost",
+      "Resource": "arn:aws:es:us-west-2:397838521661:domain/bitcoins/.kibanabtcdatasubdomain/index-pattern"
+
+    }                                       
+  ]
+}
