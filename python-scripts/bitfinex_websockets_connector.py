@@ -3,7 +3,7 @@ __author__ = "donnydevito"
 __copyright__   = "Copyright 2015, donnydevito"
 __license__ = "MIT"
 
-import json, uuid, datetime, pytz, elasticsearch, argparse
+import ssl, json, uuid, datetime, pytz, elasticsearch, argparse
 from websocket import create_connection
 from create_mappings import createMappings
 
@@ -16,8 +16,7 @@ TIMEZONE = pytz.timezone('UTC')
 # ***** CHANGE THIS TO BE THE URL OF YOUR ELASTICSEARCH SERVER *****
 ELASTICSEARCH_HOST = "http://localhost:9200"
 
-BITFINEX_WEBSOCKETS_URL = "wss://api2.bitfinex.com:3000/ws"
-
+BITFINEX_WEBSOCKETS_URL = "wss://api.poloniex.com" 
 def getArgs(): 
 	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
 	parser.add_argument('--host')
@@ -146,96 +145,107 @@ def injectTickerData(es, tickerData, indexName="btc_tickers", docType="bitfinex_
 	return successful
 
 def run(): 
-	es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
-	mappings = createMappings(es, DEFAULT_INDEX_NAME) 
-	print("MAPPINGS CREATED: " + str(mappings))
-	ws = create_connection(BITFINEX_WEBSOCKETS_URL)
-	ws.send(json.dumps({
+	# es = elasticsearch.Elasticsearch([ELASTICSEARCH_HOST])
+	# mappings = createMappings(es, DEFAULT_INDEX_NAME) 
+	# print("MAPPINGS CREATED: " + str(mappings))
+	ws = create_connection(BITFINEX_WEBSOCKETS_URL, sslopt={"cert_reqs": ssl.CERT_NONE})
+	# ws.send(json.dumps({
+	#     "event": "subscribe",
+	#     "channel": "ticker",
+	#     "pair": "BTCUSD"
+	# }))
+	# ws.send(json.dumps({
+	# 	"event": "subscribe",
+	#     "channel": "book",
+	#     "pair": "BTCUSD",
+	#     "prec": "P0",
+	#     "len":"100"	
+	# }))
+
+	# ws.send(json.dumps({ 
+	#     "event": "subscribe",
+	#     "channel": "trades",
+	#     "pair": "BTCUSD"
+	# }))
+
+	ws.send({
 	    "event": "subscribe",
-	    "channel": "ticker",
-	    "pair": "BTCUSD"
-	}))
+	    "feed": "ticker", 
+	    "realm": "realm1"
+	})
 
-	ws.send(json.dumps({
-		"event": "subscribe",
-	    "channel": "book",
-	    "pair": "BTCUSD",
-	    "prec": "P0",
-	    "len":"100"	
-	}))
-
-	ws.send(json.dumps({ 
-	    "event": "subscribe",
-	    "channel": "trades",
-	    "pair": "BTCUSD"
-	}))
-
-	bookChannel = None
-	tickerChannel = None
+	# bookChannel = None
+	# tickerChannel = None
 	tradeChannel = None
+	# ethUsdChannel = None 
 
-	while (tickerChannel == None or bookChannel == None or tradeChannel == None):
-		result = ws.recv()
-		result = json.loads(result)
-		# Channel the FORCE
-		if "channel" in result: 
-			channel = result["channel"]
-			if channel == "book": 
-				bookChannel = result["chanId"]
-				print("BOOK CHANNEL " + str(bookChannel))
-			elif channel == "ticker": 
-				tickerChannel = result["chanId"]
-				print("TICKER CHANNEL " + str(tickerChannel))
-			elif channel == "trades": 
-				tradeChannel = result["chanId"] 
-				print("TRADES CHANNEL: " + str(tradeChannel))
-			else: 
-				print("These aren't the droids you're looking for.")
+	# while (tickerChannel == None or bookChannel == None or tradeChannel == None):
+	# 	result = ws.recv()
+	# 	result = json.loads(result)
+	# 	# Channel the FORCE
+	# 	if "channel" in result: 
+	# 		channel = result["channel"]
+	# 		if channel == "book": 
+	# 			bookChannel = result["chanId"]
+	# 			print("BOOK CHANNEL " + str(bookChannel))
+	# 		elif channel == "ticker": 
+	# 			tickerChannel = result["chanId"]
+	# 			print("TICKER CHANNEL " + str(tickerChannel))
+	# 		elif channel == "trades": 
+	# 			tradeChannel = result["chanId"] 
+	# 			print("TRADES CHANNEL: " + str(tradeChannel))
+	# 		else: 
+	# 			print("These aren't the droids you're looking for.")
 
-	while True:
-		recordDate = datetime.datetime.now(TIMEZONE)
-		uniqueId = str(uuid.uuid4())
-		result = ws.recv()
-		try: 
-			result = json.loads(result)
-			curChannel = result[0]
-		except: 
-			result = ""
 
-		if curChannel == bookChannel: 
-			if len(result) == 2: 
-				if (result[1] == 'hb'): 
-					#print("ORDER BOOK HEARTBEAT!") 
-					pass
-				else: 
-					print("Injecting Initial Orderbook on WS Connect... ID: " + uniqueId) 
-					injectOrderBook(es, result[1], uniqueId, recordDate)
-			elif len(result) == 4: 
-				injectOrderBook(es, [result], uniqueId, recordDate) 
-			else: 
-				print("BOOK CHANNEL DATA INVALID: (shown below)")
-				print(result) 
 
-		elif curChannel == tickerChannel: 
-			if len(result) == 11: 
-				tickerDto = getTickerDto(result, uniqueId, recordDate)
-				injectTickerData(es, tickerDto)
-			elif len(result) == 2: 
-				if result[1] == 'hb': 
-					#print("TICKER HEARTBEAT!")
-					pass
-				else: 
-					print("AWKWARD DATA (heartbeat but not heartbeat): ")
-					print(result[1])
-			else: 
-				print("MISSING DATAPOINT: ")
-				print(result) 
 
-		elif curChannel == tradeChannel: 
-			processTradeChannelData(es, result, uniqueId, recordDate)
+	# while True:
+	# 	recordDate = datetime.datetime.now(TIMEZONE)
+	# 	uniqueId = str(uuid.uuid4())
+	# 	result = ws.recv()
+	# 	print (result)
+		# print(result)
+		# try: 
+		# 	result = json.loads(result)
+		# 	curChannel = result[0]
+		# except: 
+		# 	result = ""
 
-		else: 
-			print("DATA RECEIVED NOT RELEVANT TO ANY SUBSCRIBED CHANNELS") 
+		# if curChannel == bookChannel: 
+		# 	if len(result) == 2: 
+		# 		if (result[1] == 'hb'): 
+		# 			#print("ORDER BOOK HEARTBEAT!") 
+		# 			pass
+		# 		else: 
+		# 			print("Injecting Initial Orderbook on WS Connect... ID: " + uniqueId) 
+		# 			injectOrderBook(es, result[1], uniqueId, recordDate)
+		# 	elif len(result) == 4: 
+		# 		injectOrderBook(es, [result], uniqueId, recordDate) 
+		# 	else: 
+		# 		print("BOOK CHANNEL DATA INVALID: (shown below)")
+		# 		print(result) 
+
+		# elif curChannel == tickerChannel: 
+		# 	if len(result) == 11: 
+		# 		tickerDto = getTickerDto(result, uniqueId, recordDate)
+		# 		injectTickerData(es, tickerDto)
+		# 	elif len(result) == 2: 
+		# 		if result[1] == 'hb': 
+		# 			#print("TICKER HEARTBEAT!")
+		# 			pass
+		# 		else: 
+		# 			print("AWKWARD DATA (heartbeat but not heartbeat): ")
+		# 			print(result[1])
+		# 	else: 
+		# 		print("MISSING DATAPOINT: ")
+		# 		print(result) 
+
+		# elif curChannel == tradeChannel: 
+		# 	processTradeChannelData(es, result, uniqueId, recordDate)
+
+		# else: 
+		# 	print("DATA RECEIVED NOT RELEVANT TO ANY SUBSCRIBED CHANNELS") 
 
 	ws.close()
 

@@ -63,9 +63,11 @@ def on_open(self):
 	self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
 	self.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
+
 def on_message(self, event):
 	okcoinData = inflate(event) #data decompress
 	jsonData = getJsonData(okcoinData)
+	print (jsonData)
 	for item in jsonData: 
 		curChannel = item["channel"]
 		if curChannel == "ok_btcusd_ticker": 
@@ -178,7 +180,7 @@ def processCompletedTrades(jsonData):
 						theAmount = theAmount * -1
 
 					completedTradeDto["uuid"] = uniqueId
-					completedTradeDto["date"] = datetime.datetime.utcnow()
+					completedTradeDto["date"] = datetime.datetime.fromtimestamp((float(okCoinTimestamp) / 1000), TIMEZONE)
 					completedTradeDto["price"] = thePrice
 					completedTradeDto["tradeId"] = theId
 					completedTradeDto["timestamp"] = str(curOrder[3])
