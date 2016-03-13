@@ -7,7 +7,7 @@ import requests, json, argparse, uuid, pytz, datetime, elasticsearch
 from time import sleep 
 TIMEZONE = pytz.timezone('UTC')
 KRAKEN_API_HOST = "https://api.kraken.com"
-ELASTICSEARCH_HOST = "http://localhost:9200"
+ELASTICSEARCH_HOST = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com"
 DEFAULT_INDEX = "eth_orderbooks_live"
 DEFAULT_DOC_TYPE = "kraken_ethereum"
 SLEEP_INTERVAL = 7.5
