@@ -54,6 +54,7 @@ def getOrderbookMapping():
 			"properties": {
 					"uuid": { "type": "string", "index": "no"}, 
 					"date": {"type": "date"},
+					"currency_pair": { "type" : "string"}, 
 					"timestamp": {"type": "string", "index": "no"}, 
 					"price": {"type": "float"},
 					"absolute_volume": {"type":"float"}, 
@@ -73,7 +74,7 @@ def getCurrentDate():
 	recordDate = datetime.datetime.now(TIMEZONE)
 	return recordDate
 
-def createOrderbookDto(orderbookData, orderType): 
+def createOrderbookDto(orderbookData, orderType, displayPair="BTC_ETH"): 
 	orderbookEntry = {}
 	orderbookEntry["uuid"] = getUniqueId()
 	orderbookEntry["date"] = getCurrentDate()
@@ -85,8 +86,9 @@ def createOrderbookDto(orderbookData, orderType):
 		orderbookEntry["absolute_volume"] = volumeVal
 		orderbookEntry["timestamp"] = str(orderbookData[2])
 		orderbookEntry["order_type"] = orderType
+		orderbookEntry["currency_pair"] = str(displayPair)
 		if orderType.upper() == "BID": 
-			orderbookEntry["volume"] = volumeVal
+			orderbookEntry["volume"] = float(volumeVal)
 		elif orderType.upper() == "ASK": 
 			newVal = volumeVal * -1 
 			orderbookEntry["volume"] = float(newVal)

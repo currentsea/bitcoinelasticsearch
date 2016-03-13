@@ -33,9 +33,9 @@ def getDtoList(connector, currencyPair="BTC_ETH"):
 		dto["currency_pair"] = currencyPair
 		dto["order_type"] = "BID" 
 		print bid 
-		dto["price"] = bid[0]
-		dto["volume"] = bid[1]
-		dto["absolute_volume"] = bid[1]
+		dto["price"] = float(bid[0])
+		dto["volume"] = float(bid[1])
+		dto["absolute_volume"] = float(bid[1])
 		dtoList.append(dto)
 
 	for ask in asks: 
@@ -45,9 +45,9 @@ def getDtoList(connector, currencyPair="BTC_ETH"):
 		dto["date"] = datetime.datetime.utcnow()
 		dto["currency_pair"] = currencyPair
 		dto["order_type"] = "ASK" 
-		dto["price"] = bid[0]
-		dto["volume"] = bid[1] * -1	
-		dto["absolute_volume"] = bid[1]
+		dto["price"] = float(bid[0])
+		dto["volume"] = float(bid[1] * -1)
+		dto["absolute_volume"] = float(bid[1])
 		dtoList.append(dto)
 
 	return dtoList 
@@ -78,6 +78,7 @@ def putMapping(es, indexName, docType):
 				} 
 			} 
 		}  
+
 		es.indices.put_mapping(index=indexName, doc_type=docType, body=pnexTickersMapping)
 	except: 
 		raise 
