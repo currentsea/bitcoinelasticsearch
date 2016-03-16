@@ -9,7 +9,6 @@ from websocket import create_connection
 from create_mappings import createMappings
 from bitfinex import Bitfinex
 
-
 DEFAULT_WEBSOCKETS_URL = "wss://api2.bitfinex.com:3000/ws"
 DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 
@@ -29,4 +28,9 @@ def test_connect_elasticsearch():
 	if bitfinexConnector.esUrl != DEFAULT_ELASTICSEARCH_URL: 
 		assert elasticsearchConnection == None
 
+def test_get_symbols(): 
+	symbolJson = bitfinexConnector.getSymbols()
+	assert symbolJson != None
+	assert type(symbolJson) is list
+	assert len(symbolJson) > 0
 
