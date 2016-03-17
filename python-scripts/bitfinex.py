@@ -81,6 +81,7 @@ class Bitfinex():
 		uuidStr = str(uuidVar) 
 		orderDto["uuid"] = uuidStr
 		orderDto["date"] = recordDate 
+		orderDto["currency_pair"] = currencyPair
 		orderDto["price"] = float(dataSet[0])
 		orderDto["count"] = float(dataSet[1]) 
 		volVal = float(dataSet[2]) 
