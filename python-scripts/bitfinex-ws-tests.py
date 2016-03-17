@@ -21,16 +21,21 @@ def test_initialization():
 
 def test_connect_websocket(): 
 	websocketConnection = bitfinexConnector.connectWebsocket()
-	assert websocketConnection != None
+	assert websocketConnection == True
 
 def test_connect_elasticsearch(): 
 	elasticsearchConnection = bitfinexConnector.connectElasticsearch()
 	if bitfinexConnector.esUrl != DEFAULT_ELASTICSEARCH_URL: 
-		assert elasticsearchConnection == None
+		assert elasticsearchConnection == True
 
 def test_get_symbols(): 
 	symbolJson = bitfinexConnector.getSymbols()
 	assert symbolJson != None
 	assert type(symbolJson) is list
 	assert len(symbolJson) > 0
+
+def test_connect_orderbook_websocket(): 
+	wsConnection = bitfinexConnector.connectOrderbookSocket()
+	
+
 
