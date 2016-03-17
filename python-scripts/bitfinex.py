@@ -39,13 +39,10 @@ class Bitfinex():
 		return True
 
 	def connectElasticsearch(self): 
-		if self.es == None: 
-			try: 
-				self.es = elasticsearch.Elasticsearch([self.esUrl])
-			except: 
-				raise
-		else: 
-			pass
+		try: 
+			self.es = elasticsearch.Elasticsearch([self.esUrl])
+		except: 
+			raise
 		return True
 
 	def getSymbols(self): 
@@ -62,14 +59,14 @@ class Bitfinex():
 		orderbookMapping = {
 			"bitfinex": {
 				"properties": {
-					"currency_pair": { "type": "string"}, 
-					"uuid": { "type": "string", "index": "no"}, 
-					"date": {"type": "date"},
-					"price": {"type": "float"},
-					"count": {"type": "float"},
-					"volume" {"type" : "float"}, 
-					"absolute_volume": { "type": "float"},
-					"order_type": { "type": "string"}
+				"currency_pair": { "type": "string"}, 
+				"uuid": { "type": "string", "index": "no"}, 
+				"date": {"type": "date"},
+				"price": {"type": "float"},
+				"count": {"type": "float"},
+				"volume": {"type" : "float"}, 
+				"absolute_volume": { "type": "float"},
+				"order_type": { "type": "string"}
 				}
 			}
 		}
@@ -97,18 +94,18 @@ class Bitfinex():
 		return orderDto
 
 	def postOrderDto(self, orderDto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME): 
+		self.connectElasticsearch()
 		try: 
 			es.indices.create(name)
+			try: 
+				mappingDto = getOrderbookElasticsearchMapping()
+				es.indices.put_mapping(index=indexName, doc_type=docType, body=mappingDto)
+				print ("Created mappings for " + str(docType))
+			except: 
+				pass
 		except: 
-			print "[INFO]: Index with name " + indexName + " already exists... Continuing..." 
-		try: 
-			mappingDto = getOrderbookElasticsearchMapping()
-			es.indices.put_mapping(index=indexName, doc_type=docType, body=mappingDto)
-			print "Created mappings for " + str(docType)
-		except: 
-			print "[INFO]: Mappings already existed.  Continuing..." 
-
-		newDocUploadRequest = es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
+			pass
+		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
 		return newDocUploadRequest["created"]
 
 	def connectOrderbookSocket(self): 
@@ -157,12 +154,12 @@ class Bitfinex():
 						dataSet = dataJson[1:]
 						print (dtoType)
 						curDto = self.getOrderDto(dataSet, dtoType)
-						postedDto = postOrderDto(curDto)
+						postedDto = self.postOrderDto(curDto)
 						if postedDto == False: 
 							raise IOError("Unable to add new document to ES..." )
+						else: 
+							print ("LOL new document added to cluster LOL") 
 					else: 
 						raise
 			except: 
 				raise
-
-
