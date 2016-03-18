@@ -176,6 +176,7 @@ class Bitfinex():
 #     "prec": "P0",
 #     "len":"<LENGTH>"
 # }))
+
 		try: 
 			for symbol in symbols: 
 				self.ws.send(json.dumps({
@@ -189,6 +190,11 @@ class Bitfinex():
 					"event": "subscribe", 
 					"channel": "trades", 
 					"pair": symbol
+				}))
+				self.ws.send(json.dumps({ 
+				    "event": "subscribe",
+				    "channel": "ticker",
+				    "pair": symbol
 				}))
 				print ("SUCCESSFULLY CONNECTED " + symbol + " TO ORDERBOOK FEED!")
 				sys.stdout.flush()
@@ -212,7 +218,7 @@ class Bitfinex():
 					channelId = dataJson["chanId"]
 					channelDict[channelId] = identifier
 					channelMappings[channelId] = dataJson
-					if (len(channelDict) == len(symbols)): 
+					if (len(channelDict) == len(symbols * 3)): 
 						allChannelsSubscribed = True
 						print ("all channels subscribed..") 
 				else: 
