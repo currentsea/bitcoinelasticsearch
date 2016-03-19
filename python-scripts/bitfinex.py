@@ -209,7 +209,7 @@ class Bitfinex():
 				raise
 		return channelMappings
 
-	def runConnector(self, channelMappings):
+	def runConnector(self):
 		addedOrderbookDocs = 0
 		try:
 			while (True):
@@ -218,12 +218,12 @@ class Bitfinex():
 				dataJson = json.loads(resultData)
 				theResult = list(dataJson)
 				print ("")
-				print (channelMappings)
+				print (self.channelMappings)
 				print ("")
 				print (theResult)
 				try:
 					curChanId = int(theResult[0])
-					print (curChanId in channelMappings)
+					print (curChanId in self.channelMappings)
 				except ValueError:
 					pass
 				except:
@@ -231,13 +231,13 @@ class Bitfinex():
 				try:
 					chanId = int(theResult[0])
 					# dtoType = str(channelDict[chanId])
-					dtoType = str(channelMappings[chanId]["pair"])
-					channelType = str(channelMappings[chanId]["channel"])
+					dtoType = str(self.channelMappings[chanId]["pair"])
+					channelType = str(self.channelMappings[chanId]["channel"])
 					if channelType == "book":
 						if len(dataJson) == 2:
 							orderList = theResult[1]
 							if orderList == 'hb':
-								print ("SKIP (heartbeat)")
+								print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
 							else:
 								for orderItem in orderList:
 									orderDto = self.getOrderDto(orderItem, dtoType)
@@ -272,34 +272,45 @@ class Bitfinex():
 		except:
 			raise
 
+	def subscribeOrderbook(self):
+		for symbol in self.symbols:
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+			    "channel": "book",
+			    "pair": symbol,
+			    "prec": "P0",
+			    "len":"100"
+			}))
+			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING order book channel: " + symbol + ")")
 
-	def connectOrderbookSocket(self):
-		# connectWebsocket()
-		print ("ATTEMPTING TO CONNECT " + str(len(self.symbols)) + " CURRENCY PAIRS TO THE ORDERBOOK FEED...")
-# 		   "event": "subscribe",
-#     "channel": "book",
-#     "pair": "BTCUSD",
-#     "prec": "P0",
-#     "len":"<LENGTH>"
-# }))
+	def subscribeTrades(self):
+		for symbol in self.symbols:
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+				"channel": "trades",
+				"pair": symbol
+			}))
+			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING completed trades channel (Currency Pair: "  +  symbol + ")")
+
+	def subscribeTicker(self):
+		for symbol in self.symbols:
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+				"channel": "trades",
+				"pair": symbol
+			}))
+			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING ticker channel (Currency Pair: "  +  symbol + ")")
+
+	def subscribePublicChannels(self):
 		try:
-			for symbol in self.symbols:
-				self.ws.send(json.dumps({
-					"event": "subscribe",
-				    "channel": "book",
-				    "pair": symbol,
-				    "prec": "P0",
-				    "len":"100"
-				}))
-				self.ws.send(json.dumps({
-					"event": "subscribe",
-					"channel": "trades",
-					"pair": symbol
-				}))
-				print ("SUCCESSFULLY CONNECTED " + symbol + " TO ORDERBOOK FEED!")
-				sys.stdout.flush()
+			self.subscribeTicker()
+			self.subscribeTrades()
+			self.subscribeOrderbook()
 		except:
 			raise
-		print ("FINISHED CONNECTING CURRENCY PAIRS TO DATA FEED SUCCESSFULLY.")
-		channelMappings = self.getChannelMappings()
-		self.runConnector(channelMappings)
+		return True
+
+	def run(self):
+		self.subscribePublicChannels()
+		self.channelMappings = self.getChannelMappings()
+		self.runConnector()

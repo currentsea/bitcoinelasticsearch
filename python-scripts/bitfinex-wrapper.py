@@ -1,4 +1,4 @@
-from bitfinex import Bitfinex 
+from bitfinex import Bitfinex
 
 bfx = Bitfinex()
-print (bfx.connectOrderbookSocket())
+print (bfx.run())
