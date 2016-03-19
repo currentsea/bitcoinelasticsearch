@@ -104,7 +104,8 @@ class Bitfinex():
 				"properties": {
 					"uuid": { "type": "string", "index": "no" },
 					"date" : { "type": "date" },
-					"sequence_id": { "type" : "string", "index":"not_analyzed"},
+					"sequence_id": { "type" : "string", "index":"no"},
+					"order_id":{  "type" : "string", "index":"no"},
 					"price": {"type": "float"},
 					"volume": {"type": "float"},
 					"order_type" : { "type": "string"},
@@ -118,7 +119,7 @@ class Bitfinex():
 
 	def getTickerMapping(self):
 		self.tickerMapping = {
-			"bitfinex_ticker": {
+			"bitfinex": {
 				"properties": {
 					"uuid": { "type": "string", "index": "no"},
 					"date": {"type": "date"},
@@ -163,22 +164,21 @@ class Bitfinex():
 		return orderDto
 
 	def getCompletedTradeDto(self, theResult, completedTrade, currencyPair):
-		tradeDto = {}
-		recordDate = datetime.datetime.now(TIMEZONE)
-		uuidVar = uuid.uuid4()
-		uuidStr = str(uuidVar)
-		tradeDto["uuid"] = str(uuidVar) 
-		tradeDto["date"] = recordDate
-		tradeDto["currency_pair"] = str(currencyPair)
-		print ("COMPLETED TRADE DTO EXECUTION") 
-	# print (theResult)
-		if len(completedTrade) == 2: 
-			sliceData = completedTrade[1]
+		sliceData = theResult[1]
 
-			if str(sliceData) == 'hb': 
-				print ("COMPLETED TRADES CHANNEL HEARTBEAT!")
-				return None
-			elif type(sliceData) is list: 
+		if str(sliceData) == 'hb': 
+			return None
+		else: 
+			tradeDto = {}
+			recordDate = datetime.datetime.now(TIMEZONE)
+			uuidVar = uuid.uuid4()
+			uuidStr = str(uuidVar)
+			tradeDto["uuid"] = str(uuidVar) 
+			tradeDto["date"] = recordDate
+			tradeDto["currency_pair"] = str(currencyPair)
+	# print (theResult)
+			if len(completedTrade) == 2: 
+				sliceData = completedTrade[1]
 				print ("SLICE DATA AND LIST")
 				sliceList = []
 				for data in sliceData: 
@@ -199,15 +199,53 @@ class Bitfinex():
 						tradeDataDto["absolute_volume"] = float(absVol)
 						sliceList.append(tradeDataDto)
 				return sliceList
-					# print(data)
-		else: 
-			print ("NOT LENGTH TWO") 
-			# [7, 'tu', '1494638-BTCUSD', 16304465, 1458389060, 407.66, 0.05]
+						# print(data)
+			else: 
+				# [7, 'tu', '1494638-BTCUSD', 16304465, 1458389060, 407.66, 0.05]
+				tradeDto = {}
+				# raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
+				if len(completedTrade) >= 2: 
+					sequenceType = completedTrade[1]
+					if sequenceType == "te": 
+						tradeDto["sequence_id"] = completedTrade[2]
+						tradeDto["timestamp"] = completedTrade[3]
+						tradeDto["price"] = float(completedTrade[4])
+						volVal = float(completedTrade[5])
+					elif sequenceType == "tu": 
+						tradeDto["sequence_id"] = completedTrade[2]
+						tradeDto["order_id"] = completedTrade[3]
+						tradeDto["timestamp"] = completedTrade[4]
+						tradeDto["price"] = completedTrade[5]
+						volVal = float(completedTrade[6])
+					else: 
+						raise IOError("WEIRD") 
+					tradeDto["volume"] = float(volVal)
+					if volVal < 0: 
+						absVol = volVal * -1
+						tradeDto["order_type"] = "ASK" 
+					else: 
+						absVol = volVal
+						tradeDto["order_type"] = "BID"
+					tradeDto["absolute_volume"] = float(absVol)
+				return tradeDto
 
-			# raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
-			print (completedTrade)
-		return tradeDto
 
+#    "<CHANNEL_ID>",
+#    "te",
+#    "<SEQ>",
+#    "<TIMESTAMP>",
+#    "<PRICE>",
+#    "<AMOUNT>"
+# ]
+# 						[
+#    "<CHANNEL_ID>",
+#    "tu",
+#    "<SEQ>",
+#    "<ID>",
+#    "<TIMESTAMP>",
+#    "<PRICE>",
+#    "<AMOUNT>"
+# ]
 	# if len(completedTrade) == 4:
 	# 	tradeDto["sequence_id"] = str(completedTrade[0])
 	# 	# tradeDto["timestamp"] = str(completedTrade[1])
@@ -287,7 +325,6 @@ class Bitfinex():
 				channelDict[channelId] = identifier
 				channelMappings[channelId] = dataJson
 				symbolLength = len(self.symbols)
-
 				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * # # # # # # # # 
 				targetLength = symbolLength * 3 
 				# IF THIS SAVED YOU HOURS OF DEBUGGING, YOU'RE FUCKING WELCOME * #
@@ -324,6 +361,40 @@ class Bitfinex():
 			raise IOError("Invalid orderbook item")
 
 
+	def getTickerDto(self, theResult, tickerData, currencyPairSymbol): 
+		tickerDto = {}
+		recordDate = datetime.datetime.now(TIMEZONE)
+		uuidVar = uuid.uuid4()
+		uuidStr = str(uuidVar)
+		tickerDto["uuid"] = str(uuidVar)
+		tickerDto["recordDate"] = recordDate
+		tickerDto["currency_pair"] = currencyPairSymbol
+
+		print (tickerData)
+		# bidPrice = float(tickerData[1])
+		# bidVol = float(tickerData[2])
+		# askPrice = float(tickerData[3])
+		# askVol = float(tickerData[4])
+		# dailyChange = float(tickerData[5])
+		# dailyDelta = float(tickerData[6])
+		# lastPrice = float(tickerData[7])
+		# volume = float(tickerData[8])
+		# highPrice = float(tickerData[9])
+		# lowPrice = float(tickerData[10])
+		# tickerDto = {}
+		# tickerDto["uuid"] = uniqueId
+		# tickerDto["date"] = recordDate
+		# tickerDto["last_price"] = lastPrice
+		# tickerDto["volume"] = volume
+		# tickerDto["high"] = highPrice
+		# tickerDto["ask"] = askPrice
+		# tickerDto["low"] = lowPrice
+		# tickerDto["bid"] = bidPrice
+		# tickerDto["daily_change"] = dailyChange
+		# tickerDto["daily_delta"] = dailyDelta
+		# tickerDto["ask_volume"] = askVol
+		# tickerDto["bid_volume"] = bidVol
+		return tickerDto
 
 	def runConnector(self):
 		try:
@@ -342,29 +413,52 @@ class Bitfinex():
 				except:
 					raise
 				try:
+					hbCounter = 0
 					chanId = int(theResult[0])
 					# currencyPairSymbol = str(channelDict[chanId])
 					currencyPairSymbol = str(self.channelMappings[chanId]["pair"])
 					channelType = str(self.channelMappings[chanId]["channel"])
-					if channelType == "book":
-						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
-					elif channelType == "trades": 
-						tradesDto = self.getCompletedTradeDto(theResult, dataJson, currencyPairSymbol)
-						if type(tradesDto) is list: 
-							for dto in tradesDto: 
-								print (self.postDto(dto, "live_crypto_trades", DEFAULT_DOCTYPE_NAME))
-						# tradeData = dataJson[1]
-						# for dto in tradeData: 
-						# 	if 
-						# 	print (dto)
-						# 	print(self.getCompletedTradeDto(dto, currencyPairSymbol))
+					heartbeat = [chanId, 'hb']
+					if theResult == heartbeat:
+						hbCounter = hbCounter + 1
+						if hbCounter % 100 == 0: 
+							print("HEARTBEAT COUNTER (Trades Channel): " + str(hbCounter))
+					else: 
+						if channelType == "book":
+							self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
+						elif channelType == "trades": 
+							tradesDto = self.getCompletedTradeDto(theResult, dataJson, currencyPairSymbol)
+							if type(tradesDto) is list: 
+								for dto in tradesDto: 
+									self.postDto(dto, "live_crypto_trades", DEFAULT_DOCTYPE_NAME)
+							elif tradesDto != None: 
+								self.postDto(tradesDto, "live_crypto_trades", DEFAULT_DOCTYPE_NAME)
+							else: 
+								hbCounter = hbCounter + 1
+								if hbCounter % 10 == 0: 
+									print ('HB INTERVAL OF 10!') 
+						elif channelType == "ticker": 
+							tickerDto = self.getTickerDto(theResult, dataJson, currencyPairSymbol)
+							self.postDto(tickerDto, "live_crypto_tickers", DEFAULT_DOCTYPE_NAME)
+
+							# else: 
+							# 	hbCounter = hbCounter + 1
+
+							# tradeData = dataJson[1]
+							# for dto in tradeData: 
+							# 	if 
+							# 	print (dto)
+							# 	print(self.getCompletedTradeDto(dto, currencyPairSymbol))
+							# else: 
+							# 	print ("\n\n\n-----")
+							# 	print ("trade data is below for non list") 
+							# 	print (tradeData)
+							# self.getOrderDto(dataJson, currencyPairSymbol)
+						# elif channelType == "ticker":
+						# 	print (dataJson)
+						# 	print (self.getTickerDto(theResult, dataJson, currencyPairSymbol))
 						# else: 
-						# 	print ("\n\n\n-----")
-						# 	print ("trade data is below for non list") 
-						# 	print (tradeData)
-						# self.getOrderDto(dataJson, currencyPairSymbol)
-					else:
-						print ("Channel with type: " + channelType + " is not yet supported")
+						# 	print ("Channel with type: " + channelType + " is not yet supported")
 				except ValueError:
 					pass
 				except KeyError:
