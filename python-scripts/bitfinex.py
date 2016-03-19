@@ -110,7 +110,27 @@ class Bitfinex():
 		}
 		return completedTradeMapping
 
-
+	def getTickerMapping(self):
+		tickerMapping = {
+			"bitfinex_ticker": {
+				"properties": {
+					"uuid": { "type": "string", "index": "no"},
+					"date": {"type": "date"},
+					"last_price": {"type": "float"},
+					"timestamp": {"type": "string", "index": "no"},
+					"volume": {"type": "float"},
+					"high": {"type": "float"},
+					"ask": {"type": "float"},
+					"low": {"type": "float"},
+					"daily_change": {"type": "float"},
+					"daily_delta": {"type" : "float"},
+					"ask_volume": {"type": "float"},
+					"bid_volume": {"type": "float"},
+					"bid": {"type": "float"}
+				}
+			}
+		}
+		return bitfinexTickerMapping
 
 	def getOrderDto(self, dataSet, currencyPair):
 		if (len(dataSet) != 3):
@@ -139,6 +159,7 @@ class Bitfinex():
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
+
 		pass
 
 	# if len(completedTrade) == 4:
