@@ -16,7 +16,6 @@ import requests
 import elasticsearch
 
 from websocket import create_connection
-from create_mappings import createMappings
 
 DEFAULT_DOCTYPE_NAME = "bitfinex"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
@@ -179,7 +178,6 @@ class Bitfinex():
 	# print (theResult)
 			if len(completedTrade) == 2: 
 				sliceData = completedTrade[1]
-				print ("SLICE DATA AND LIST")
 				sliceList = []
 				for data in sliceData: 
 					if len(data) == 4: 
@@ -371,29 +369,27 @@ class Bitfinex():
 		tickerDto["currency_pair"] = currencyPairSymbol
 
 		print (tickerData)
-		# bidPrice = float(tickerData[1])
-		# bidVol = float(tickerData[2])
-		# askPrice = float(tickerData[3])
-		# askVol = float(tickerData[4])
-		# dailyChange = float(tickerData[5])
-		# dailyDelta = float(tickerData[6])
-		# lastPrice = float(tickerData[7])
-		# volume = float(tickerData[8])
-		# highPrice = float(tickerData[9])
-		# lowPrice = float(tickerData[10])
-		# tickerDto = {}
-		# tickerDto["uuid"] = uniqueId
-		# tickerDto["date"] = recordDate
-		# tickerDto["last_price"] = lastPrice
-		# tickerDto["volume"] = volume
-		# tickerDto["high"] = highPrice
-		# tickerDto["ask"] = askPrice
-		# tickerDto["low"] = lowPrice
-		# tickerDto["bid"] = bidPrice
-		# tickerDto["daily_change"] = dailyChange
-		# tickerDto["daily_delta"] = dailyDelta
-		# tickerDto["ask_volume"] = askVol
-		# tickerDto["bid_volume"] = bidVol
+		bidPrice = float(tickerData[1])
+		bidVol = float(tickerData[2])
+		askPrice = float(tickerData[3])
+		askVol = float(tickerData[4])
+		dailyChange = float(tickerData[5])
+		dailyDelta = float(tickerData[6])
+		lastPrice = float(tickerData[7])
+		volume = float(tickerData[8])
+		highPrice = float(tickerData[9])
+		lowPrice = float(tickerData[10])
+		tickerDto = {}
+		tickerDto["last_price"] = lastPrice
+		tickerDto["volume"] = volume
+		tickerDto["high"] = highPrice
+		tickerDto["ask"] = askPrice
+		tickerDto["low"] = lowPrice
+		tickerDto["bid"] = bidPrice
+		tickerDto["daily_change"] = dailyChange
+		tickerDto["daily_delta"] = dailyDelta
+		tickerDto["ask_volume"] = askVol
+		tickerDto["bid_volume"] = bidVol
 		return tickerDto
 
 	def runConnector(self):
@@ -440,25 +436,6 @@ class Bitfinex():
 						elif channelType == "ticker": 
 							tickerDto = self.getTickerDto(theResult, dataJson, currencyPairSymbol)
 							self.postDto(tickerDto, "live_crypto_tickers", DEFAULT_DOCTYPE_NAME)
-
-							# else: 
-							# 	hbCounter = hbCounter + 1
-
-							# tradeData = dataJson[1]
-							# for dto in tradeData: 
-							# 	if 
-							# 	print (dto)
-							# 	print(self.getCompletedTradeDto(dto, currencyPairSymbol))
-							# else: 
-							# 	print ("\n\n\n-----")
-							# 	print ("trade data is below for non list") 
-							# 	print (tradeData)
-							# self.getOrderDto(dataJson, currencyPairSymbol)
-						# elif channelType == "ticker":
-						# 	print (dataJson)
-						# 	print (self.getTickerDto(theResult, dataJson, currencyPairSymbol))
-						# else: 
-						# 	print ("Channel with type: " + channelType + " is not yet supported")
 				except ValueError:
 					pass
 				except KeyError:
