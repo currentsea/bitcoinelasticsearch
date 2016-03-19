@@ -160,16 +160,27 @@ class Bitfinex():
 			orderDto["absolute_volume"] = float(volVal)
 		return orderDto
 
-	def getCompletedTradeDto(self, completedTrade, currencyPair):
+	def getCompletedTradeDto(self, theResult, completedTrade, currencyPair):
 		tradeDto = {}
-		print ("THIS IS THE COMPLETED TRADE")
-		print (completedTrade)
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
 		tradeDto["uuid"] = str(uuidVar) 
 		tradeDto["date"] = str(recordDate)
 		tradeDto["currency_pair"] = str(currencyPair)
+		print ("COMPLETED TRADE DTO EXECUTION") 
+	# print (theResult)
+		if len(completedTrade) == 2: 
+			sliceData = completedTrade[1]
+			if str(sliceData) == 'hb': 
+				print ("COMPLETED TRADES CHANNEL HEARTBEAT!")
+			elif type(sliceData) is list: 
+				print ("SLICE DATA AND LIST")
+				for data in sliceData: 
+					print(data)
+		else: 
+			print ("NOT LENGTH TWO") 
+			raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
 		return tradeDto
 
 	# if len(completedTrade) == 4:
@@ -268,7 +279,8 @@ class Bitfinex():
 		if len(dataJson) == 2:
 			orderList = theResult[1]
 			if orderList == 'hb':
-				print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
+				# print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
+				pass
 			else:
 				for orderItem in orderList:
 					orderDto = self.getOrderDto(orderItem, currencyPairSymbol)
@@ -278,7 +290,7 @@ class Bitfinex():
 						raise IOError("Unable to add new document to ES..." )
 		elif len(dataJson) == 4:
 			dataSet = dataJson[1:]
-			print (currencyPairSymbol)
+			# print (currencyPairSymbol)
 			curDto = self.getOrderDto(dataSet, currencyPairSymbol)
 			postedDto = self.postDto(curDto)
 			if postedDto == False:
@@ -293,13 +305,13 @@ class Bitfinex():
 			resultData = self.ws.recv()
 			self.channelMappings = self.getChannelMappings()
 			while (True):
-				print ("^__^")
+				# print ("^__^")
 				resultData = self.ws.recv()
 				dataJson = json.loads(resultData)
 				theResult = list(dataJson)
 				try:
 					curChanId = int(theResult[0])
-					print (curChanId in self.channelMappings)
+					# print (curChanId in self.channelMappings)
 				except ValueError:
 					pass
 				except:
@@ -312,7 +324,8 @@ class Bitfinex():
 					if channelType == "book":
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					elif channelType == "trades": 
-						print(self.getCompletedTradeDto(dataJson, currencyPairSymbol))
+						tradesDto = self.getCompletedTradeDto(theResult, dataJson, currencyPairSymbol)
+						print(tradesDto)
 						# tradeData = dataJson[1]
 						# for dto in tradeData: 
 						# 	if 
