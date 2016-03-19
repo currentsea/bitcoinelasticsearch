@@ -215,27 +215,48 @@ class Bitfinex():
 		allChannelsSubscribed = False
 		channelDict = {}
 		channelMappings = {}
+		for symbol in self.symbols:
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+			    "channel": "book",
+			    "pair": symbol,
+			    "prec": "P0",
+			    "len":"100"
+			}))
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+			    "channel": "ticker",
+			    "pair": symbol,
+			}))
+			self.ws.send(json.dumps({
+				"event": "subscribe",
+			    "channel": "trades",
+			    "pair": symbol,
+			}))
 		while (allChannelsSubscribed == False):
 			resultData = self.ws.recv()
 			try:
 				dataJson = json.loads(resultData)
-				if ("chanId" in dataJson and "event" in dataJson and allChannelsSubscribed == False):
 					# print (dataJson)
-					pairName = str(dataJson["pair"])
-					print ("PAIR NAME IS: " + pairName)
-					pairChannelType = str(dataJson["channel"])
-					identifier = pairName
-					channelId = dataJson["chanId"]
-					channelDict[channelId] = identifier
-					channelMappings[channelId] = dataJson
-				if (len(channelDict) == len(self.symbols)):
+				pairName = str(dataJson["pair"])
+				print ("PAIR NAME IS: " + pairName)
+				pairChannelType = str(dataJson["channel"])
+				identifier = pairName
+				channelId = dataJson["chanId"]
+				channelDict[channelId] = identifier
+				channelMappings[channelId] = dataJson
+				symbolLength = len(self.symbols)
+				targetLength = symbolLength * 3
+				if (len(channelDict) == targetLength):
 					allChannelsSubscribed = True
 					print ("all channels subscribed..")
+			except TypeError:
+				pass
 			except:
 				raise
 		return channelMappings
 
-	def updateOrderBookIndex(self, dataJson, currencyPairSymbol):
+	def updateOrderBookIndex(self, theResult, dataJson, currencyPairSymbol):
 		if len(dataJson) == 2:
 			orderList = theResult[1]
 			if orderList == 'hb':
@@ -243,6 +264,7 @@ class Bitfinex():
 			else:
 				for orderItem in orderList:
 					orderDto = self.getOrderDto(orderItem, currencyPairSymbol)
+					print (orderDto)
 					postedDto = self.postDto(orderDto)
 					if postedDto == False:
 						raise IOError("Unable to add new document to ES..." )
@@ -258,6 +280,8 @@ class Bitfinex():
 
 	def runConnector(self):
 		try:
+			resultData = self.ws.recv()
+			self.channelMappings = self.getChannelMappings()
 			while (True):
 				print ("^__^")
 				resultData = self.ws.recv()
@@ -283,52 +307,16 @@ class Bitfinex():
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
-				except:
+				except ValueError:
+					pass
+				except KeyError:
+					self.channelMappings = self.getChannelMappings()
 					print ("")
 					print ("HORSE SHIT FROM CHANNEL: " + str(channelType))
 					print (resultData)
+					raise
 		except:
 			raise
-
-	def subscribeOrderbook(self):
-		for symbol in self.symbols:
-			self.ws.send(json.dumps({
-				"event": "subscribe",
-			    "channel": "book",
-			    "pair": symbol,
-			    "prec": "P0",
-			    "len":"100"
-			}))
-			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING order book channel: " + symbol + ")")
-
-	def subscribeTrades(self):
-		for symbol in self.symbols:
-			self.ws.send(json.dumps({
-				"event": "subscribe",
-				"channel": "trades",
-				"pair": symbol
-			}))
-			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING completed trades channel (Currency Pair: "  +  symbol + ")")
-
-	def subscribeTicker(self):
-		for symbol in self.symbols:
-			self.ws.send(json.dumps({
-				"event": "subscribe",
-				"channel": "trades",
-				"pair": symbol
-			}))
-			print ("SUBSCRIBED TO BITFINEX LIVE STREAMING ticker channel (Currency Pair: "  +  symbol + ")")
-
-	def subscribePublicChannels(self):
-		try:
-			self.subscribeTicker()
-			self.subscribeTrades()
-			self.subscribeOrderbook()
-		except:
-			raise
-		return True
 
 	def run(self):
-		self.subscribePublicChannels()
-		self.channelMappings = self.getChannelMappings()
 		self.runConnector()
