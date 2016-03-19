@@ -31,10 +31,13 @@ class Bitfinex():
 		self.wsUrl = wsUrl
 		self.esUrl = esUrl
 		self.apiUrl = apiUrl
+		self.symbols = self.getSymbols()
 		self.connectWebsocket()
 		self.connectElasticsearch()
 		self.createIndices()
-		self.symbols = self.getSymbols()
+		self.getCompletedTradesMapping()
+		self.getOrderbookElasticsearchMapping()
+		self.createMappings()
 
 
 	def createIndices(self, indecesList=DEFAULT_INDECES):
@@ -42,15 +45,17 @@ class Bitfinex():
 			try:
 				self.es.indices.create(index)
 			except elasticsearch.exceptions.RequestError as e:
-				print (str(type(e)))
-				# if e is TransportError():
-				# 	try:
-				# 		if str(e.error_message) == "index_already_exists_exception":
-				# 			print ("Index " + index + " already exists.  Continuing...")
-				# 	except:
-				# 		raise
+				print ("INDEX " + index + " ALREADY EXISTS")
 			except:
-				raise
+				pass
+
+	def createMappings(self):
+		try:
+			self.es.indices.put_mapping(index="live_crypto_orderbooks", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
+			self.es.indices.put_mapping(index="live_crypto_trades", doc_type=DEFAULT_DOCTYPE_NAME, body=self.completedTradeMapping)
+			self.es.indices.put_mapping(index="live_crypto_tickers", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
+		except:
+			raise
 
 	def connectWebsocket(self):
 		try:
@@ -77,7 +82,7 @@ class Bitfinex():
 		return reqJson
 
 	def getOrderbookElasticsearchMapping(self):
-		orderbookMapping = {
+		self.orderbookMapping = {
 			"bitfinex": {
 				"properties": {
 					"currency_pair": { "type": "string"},
@@ -91,10 +96,10 @@ class Bitfinex():
 				}
 			}
 		}
-		return orderbookMapping
+		return self.orderbookMapping
 
 	def getCompletedTradesMapping(self):
-		completedTradeMapping = {
+		self.completedTradeMapping = {
 			"bitfinex": {
 				"properties": {
 					"uuid": { "type": "string", "index": "no" },
@@ -108,10 +113,10 @@ class Bitfinex():
 				 }
 			}
 		}
-		return completedTradeMapping
+		return self.completedTradeMapping
 
 	def getTickerMapping(self):
-		tickerMapping = {
+		self.tickerMapping = {
 			"bitfinex_ticker": {
 				"properties": {
 					"uuid": { "type": "string", "index": "no"},
@@ -130,7 +135,7 @@ class Bitfinex():
 				}
 			}
 		}
-		return bitfinexTickerMapping
+		return self.bitfinexTickerMapping
 
 	def getOrderDto(self, dataSet, currencyPair):
 		if (len(dataSet) != 3):
@@ -230,7 +235,7 @@ class Bitfinex():
 				raise
 		return channelMappings
 
-	def updateOrderBookIndex(self):
+	def updateOrderBookIndex(self, dataJson, currencyPairSymbol):
 		if len(dataJson) == 2:
 			orderList = theResult[1]
 			if orderList == 'hb':
@@ -275,7 +280,7 @@ class Bitfinex():
 					currencyPairSymbol = str(self.channelMappings[chanId]["pair"])
 					channelType = str(self.channelMappings[chanId]["channel"])
 					if channelType == "book":
-						self.updateOrderBookIndex(theResult)
+						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
 				except:
