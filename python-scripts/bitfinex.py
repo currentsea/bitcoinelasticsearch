@@ -230,8 +230,28 @@ class Bitfinex():
 				raise
 		return channelMappings
 
+	def updateOrderBookIndex(self):
+		if len(dataJson) == 2:
+			orderList = theResult[1]
+			if orderList == 'hb':
+				print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
+			else:
+				for orderItem in orderList:
+					orderDto = self.getOrderDto(orderItem, dtoType)
+					postedDto = self.postDto(orderDto)
+					if postedDto == False:
+						raise IOError("Unable to add new document to ES..." )
+		elif len(dataJson) == 4:
+			dataSet = dataJson[1:]
+			print (dtoType)
+			curDto = self.getOrderDto(dataSet, dtoType)
+			postedDto = self.postDto(curDto)
+			if postedDto == False:
+				raise IOError("Unable to add new document to ES..." )
+		else:
+			raise IOError("Invalid orderbook item")
+
 	def runConnector(self):
-		addedOrderbookDocs = 0
 		try:
 			while (True):
 				print ("^__^")
@@ -255,35 +275,7 @@ class Bitfinex():
 					dtoType = str(self.channelMappings[chanId]["pair"])
 					channelType = str(self.channelMappings[chanId]["channel"])
 					if channelType == "book":
-						if len(dataJson) == 2:
-							orderList = theResult[1]
-							if orderList == 'hb':
-								print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
-							else:
-								for orderItem in orderList:
-									orderDto = self.getOrderDto(orderItem, dtoType)
-									postedDto = self.postDto(orderDto)
-									if postedDto == False:
-										raise IOError("Unable to add new document to ES..." )
-									else:
-										if addedOrderbookDocs % 1000 == 0:
-											print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
-										addedOrderbookDocs = addedOrderbookDocs + 1
-
-						elif len(dataJson) == 4:
-							dataSet = dataJson[1:]
-							print (dtoType)
-							curDto = self.getOrderDto(dataSet, dtoType)
-							postedDto = self.postDto(curDto)
-							if postedDto == False:
-								raise IOError("Unable to add new document to ES..." )
-							else:
-								if addedOrderbookDocs % 1000 == 0:
-									print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
-								addedOrderbookDocs = addedOrderbookDocs + 1
-
-						else:
-							raise IOError("Invalid orderbook item")
+						self.updateOrderBookIndex(theResult)
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
 				except:
