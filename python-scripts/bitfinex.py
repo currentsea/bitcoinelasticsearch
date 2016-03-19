@@ -168,31 +168,37 @@ class Bitfinex():
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
 		tradeDto["uuid"] = str(uuidVar) 
-		tradeDto["date"] = str(recordDate)
+		tradeDto["date"] = recordDate
 		tradeDto["currency_pair"] = str(currencyPair)
 		print ("COMPLETED TRADE DTO EXECUTION") 
 	# print (theResult)
 		if len(completedTrade) == 2: 
 			sliceData = completedTrade[1]
+
 			if str(sliceData) == 'hb': 
 				print ("COMPLETED TRADES CHANNEL HEARTBEAT!")
 				return None
 			elif type(sliceData) is list: 
 				print ("SLICE DATA AND LIST")
+				sliceList = []
 				for data in sliceData: 
 					if len(data) == 4: 
-						tradeDto["sequence_id"] = str(data[0])
-						tradeDto["timestamp"] = str(data[1])
-						tradeDto["price"] = float(data[2])
+						tradeDataDto = {}
+						tradeDataDto["uuid"] = str(uuidVar) 
+						tradeDataDto["sequence_id"] = str(data[0])
+						tradeDataDto["timestamp"] = str(data[1])
+						tradeDataDto["price"] = float(data[2])
 						volVal = data[3]
-						tradeDto["volume"] = float(volVal)
+						tradeDataDto["volume"] = float(volVal)
 						if volVal < 0: 
 							absVol = volVal * -1
-							tradeDto["order_type"] = "ASK" 
+							tradeDataDto["order_type"] = "ASK" 
 						else: 
 							absVol = volVal
-							tradeDto["order_type"] = "BID"
-						tradeDto["absolute_volume"] = float(absVol)
+							tradeDataDto["order_type"] = "BID"
+						tradeDataDto["absolute_volume"] = float(absVol)
+						sliceList.append(tradeDataDto)
+				return sliceList
 					# print(data)
 		else: 
 			print ("NOT LENGTH TWO") 
@@ -231,7 +237,7 @@ class Bitfinex():
 	# 	tradeDto["date"] = recordDate
 	# 	tradeDto["volume"] = float(completedTrade[5])
 
-	def postDto(self, orderDto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
+	def postDto(self, dto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
 		# self.connectElasticsearch()
 		# try:
 		# 	es.indices.create(name)
@@ -243,7 +249,7 @@ class Bitfinex():
 		# 		pass
 		# except:
 		# 	pass
-		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
+		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=dto)
 		return newDocUploadRequest["created"]
 
 	def getChannelMappings(self):
@@ -344,7 +350,9 @@ class Bitfinex():
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					elif channelType == "trades": 
 						tradesDto = self.getCompletedTradeDto(theResult, dataJson, currencyPairSymbol)
-						print(tradesDto)
+						if type(tradesDto) is list: 
+							for dto in tradesDto: 
+								print (self.postDto(dto, "live_crypto_trades", DEFAULT_DOCTYPE_NAME))
 						# tradeData = dataJson[1]
 						# for dto in tradeData: 
 						# 	if 
