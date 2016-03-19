@@ -145,11 +145,9 @@ class Bitfinex():
 		orderDto["uuid"] = uuidStr
 		orderDto["date"] = recordDate
 		orderDto["currency_pair"] = currencyPair
-		
 		if (len(dataSet) != 3):
 			print (dataSet)
 			raise IOError("Invalid data set passed to getOrderDto")
-
 		orderDto["price"] = float(dataSet[0])
 		orderDto["count"] = float(dataSet[1])
 		volVal = float(dataSet[2])
@@ -162,14 +160,17 @@ class Bitfinex():
 			orderDto["absolute_volume"] = float(volVal)
 		return orderDto
 
-	def completedTradeDto(self, completedTrade, currencyPair):
+	def getCompletedTradeDto(self, completedTrade, currencyPair):
 		tradeDto = {}
+		print ("THIS IS THE COMPLETED TRADE")
 		print (completedTrade)
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
-
-		pass
+		tradeDto["uuid"] = str(uuidVar) 
+		tradeDto["date"] = str(recordDate)
+		tradeDto["currency_pair"] = str(currencyPair)
+		return tradeDto
 
 	# if len(completedTrade) == 4:
 	# 	tradeDto["sequence_id"] = str(completedTrade[0])
@@ -251,8 +252,9 @@ class Bitfinex():
 				channelMappings[channelId] = dataJson
 				symbolLength = len(self.symbols)
 
-				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * 
-				targetLength = symbolLength * 3
+				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * # # # # # # # # 
+				targetLength = symbolLength * 3 
+				# IF THIS SAVED YOU HOURS OF DEBUGGING, YOU'RE FUCKING WELCOME * #
 				if (len(channelDict) == targetLength):
 					allChannelsSubscribed = True
 					print ("all channels subscribed..")
@@ -310,14 +312,16 @@ class Bitfinex():
 					if channelType == "book":
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					elif channelType == "trades": 
-						tradeData = dataJson[1]
-						if type(tradeData) is list: 
-							for dto in tradeData: 
-								print(self.getOrderDto(dto, currencyPairSymbol))
-						else: 
-							print ("\n\n\n-----")
-							print ("trade data is below for non list") 
-							print (tradeData)
+						print(self.getCompletedTradeDto(dataJson, currencyPairSymbol))
+						# tradeData = dataJson[1]
+						# for dto in tradeData: 
+						# 	if 
+						# 	print (dto)
+						# 	print(self.getCompletedTradeDto(dto, currencyPairSymbol))
+						# else: 
+						# 	print ("\n\n\n-----")
+						# 	print ("trade data is below for non list") 
+						# 	print (tradeData)
 						# self.getOrderDto(dataJson, currencyPairSymbol)
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
