@@ -138,8 +138,6 @@ class Bitfinex():
 		return self.bitfinexTickerMapping
 
 	def getOrderDto(self, dataSet, currencyPair):
-		if (len(dataSet) != 3):
-			raise IOError("Invalid data set passed to getOrderDto")
 		orderDto = {}
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uuidVar = uuid.uuid4()
@@ -147,6 +145,11 @@ class Bitfinex():
 		orderDto["uuid"] = uuidStr
 		orderDto["date"] = recordDate
 		orderDto["currency_pair"] = currencyPair
+		
+		if (len(dataSet) != 3):
+			print (dataSet)
+			raise IOError("Invalid data set passed to getOrderDto")
+
 		orderDto["price"] = float(dataSet[0])
 		orderDto["count"] = float(dataSet[1])
 		volVal = float(dataSet[2])
@@ -281,6 +284,8 @@ class Bitfinex():
 		else:
 			raise IOError("Invalid orderbook item")
 
+
+
 	def runConnector(self):
 		try:
 			resultData = self.ws.recv()
@@ -305,8 +310,15 @@ class Bitfinex():
 					if channelType == "book":
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
 					elif channelType == "trades": 
-						# self.
-						pass
+						tradeData = dataJson[1]
+						if type(tradeData) is list: 
+							for dto in tradeData: 
+								print(self.getOrderDto(dto, currencyPairSymbol))
+						else: 
+							print ("\n\n\n-----")
+							print ("trade data is below for non list") 
+							print (tradeData)
+						# self.getOrderDto(dataJson, currencyPairSymbol)
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
 				except ValueError:
