@@ -176,6 +176,7 @@ class Bitfinex():
 			sliceData = completedTrade[1]
 			if str(sliceData) == 'hb': 
 				print ("COMPLETED TRADES CHANNEL HEARTBEAT!")
+				return None
 			elif type(sliceData) is list: 
 				print ("SLICE DATA AND LIST")
 				for data in sliceData: 
@@ -195,7 +196,10 @@ class Bitfinex():
 					# print(data)
 		else: 
 			print ("NOT LENGTH TWO") 
-			raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
+			# [7, 'tu', '1494638-BTCUSD', 16304465, 1458389060, 407.66, 0.05]
+
+			# raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
+			print (completedTrade)
 		return tradeDto
 
 	# if len(completedTrade) == 4:
