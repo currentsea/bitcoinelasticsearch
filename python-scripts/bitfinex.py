@@ -161,6 +161,7 @@ class Bitfinex():
 
 	def completedTradeDto(self, completedTrade, currencyPair):
 		tradeDto = {}
+		print (completedTrade)
 		recordDate = datetime.datetime.now(TIMEZONE)
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
@@ -246,6 +247,8 @@ class Bitfinex():
 				channelDict[channelId] = identifier
 				channelMappings[channelId] = dataJson
 				symbolLength = len(self.symbols)
+
+				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * 
 				targetLength = symbolLength * 3
 				if (len(channelDict) == targetLength):
 					allChannelsSubscribed = True
@@ -287,10 +290,6 @@ class Bitfinex():
 				resultData = self.ws.recv()
 				dataJson = json.loads(resultData)
 				theResult = list(dataJson)
-				print ("")
-				print (self.channelMappings)
-				print ("")
-				print (theResult)
 				try:
 					curChanId = int(theResult[0])
 					print (curChanId in self.channelMappings)
