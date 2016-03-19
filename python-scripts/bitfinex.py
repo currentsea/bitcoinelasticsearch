@@ -305,6 +305,9 @@ class Bitfinex():
 					channelType = str(self.channelMappings[chanId]["channel"])
 					if channelType == "book":
 						self.updateOrderBookIndex(theResult, dataJson, currencyPairSymbol)
+					elif channelType == "trades": 
+						# self.
+						pass
 					else:
 						print ("Channel with type: " + channelType + " is not yet supported")
 				except ValueError:
