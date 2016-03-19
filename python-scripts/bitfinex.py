@@ -33,11 +33,22 @@ class Bitfinex():
 		self.apiUrl = apiUrl
 		self.connectWebsocket()
 		self.connectElasticsearch()
+		self.createIndices()
+		self.symbols = self.getSymbols()
 
-	def createIndeces(self, indecesList=DEFAULT_INDECES):
+
+	def createIndices(self, indecesList=DEFAULT_INDECES):
 		for index in DEFAULT_INDECES:
 			try:
 				self.es.indices.create(index)
+			except elasticsearch.exceptions.RequestError as e:
+				print (str(type(e)))
+				# if e is TransportError():
+				# 	try:
+				# 		if str(e.error_message) == "index_already_exists_exception":
+				# 			print ("Index " + index + " already exists.  Continuing...")
+				# 	except:
+				# 		raise
 			except:
 				raise
 
@@ -160,25 +171,111 @@ class Bitfinex():
 	# 	tradeDto["volume"] = float(completedTrade[5])
 
 	def postDto(self, orderDto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
-		self.connectElasticsearch()
-		try:
-			es.indices.create(name)
-			try:
-				mappingDto = getOrderbookElasticsearchMapping()
-				es.indices.put_mapping(index=indexName, doc_type=docType, body=mappingDto)
-				print ("Created mappings for " + str(docType))
-			except:
-				pass
-		except:
-			pass
+		# self.connectElasticsearch()
+		# try:
+		# 	es.indices.create(name)
+		# 	try:
+		# 		mappingDto = getOrderbookElasticsearchMapping()
+		# 		es.indices.put_mapping(index=indexName, doc_type=docType, body=mappingDto)
+		# 		print ("Created mappings for " + str(docType))
+		# 	except:
+		# 		pass
+		# except:
+		# 	pass
 		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=orderDto)
 		return newDocUploadRequest["created"]
+
+	def getChannelMappings(self):
+		allChannelsSubscribed = False
+		channelDict = {}
+		channelMappings = {}
+		while (allChannelsSubscribed == False):
+			resultData = self.ws.recv()
+			try:
+				dataJson = json.loads(resultData)
+				if ("chanId" in dataJson and "event" in dataJson and allChannelsSubscribed == False):
+					# print (dataJson)
+					pairName = str(dataJson["pair"])
+					print ("PAIR NAME IS: " + pairName)
+					pairChannelType = str(dataJson["channel"])
+					identifier = pairName
+					channelId = dataJson["chanId"]
+					channelDict[channelId] = identifier
+					channelMappings[channelId] = dataJson
+				if (len(channelDict) == len(self.symbols)):
+					allChannelsSubscribed = True
+					print ("all channels subscribed..")
+			except:
+				raise
+		return channelMappings
+
+	def runConnector(self, channelMappings):
+		addedOrderbookDocs = 0
+		try:
+			while (True):
+				print ("^__^")
+				resultData = self.ws.recv()
+				dataJson = json.loads(resultData)
+				theResult = list(dataJson)
+				print ("")
+				print (channelMappings)
+				print ("")
+				print (theResult)
+				try:
+					curChanId = int(theResult[0])
+					print (curChanId in channelMappings)
+				except ValueError:
+					pass
+				except:
+					raise
+				try:
+					chanId = int(theResult[0])
+					# dtoType = str(channelDict[chanId])
+					dtoType = str(channelMappings[chanId]["pair"])
+					channelType = str(channelMappings[chanId]["channel"])
+					if channelType == "book":
+						if len(dataJson) == 2:
+							orderList = theResult[1]
+							if orderList == 'hb':
+								print ("SKIP (heartbeat)")
+							else:
+								for orderItem in orderList:
+									orderDto = self.getOrderDto(orderItem, dtoType)
+									postedDto = self.postDto(orderDto)
+									if postedDto == False:
+										raise IOError("Unable to add new document to ES..." )
+									else:
+										if addedOrderbookDocs % 1000 == 0:
+											print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
+										addedOrderbookDocs = addedOrderbookDocs + 1
+
+						elif len(dataJson) == 4:
+							dataSet = dataJson[1:]
+							print (dtoType)
+							curDto = self.getOrderDto(dataSet, dtoType)
+							postedDto = self.postDto(curDto)
+							if postedDto == False:
+								raise IOError("Unable to add new document to ES..." )
+							else:
+								if addedOrderbookDocs % 1000 == 0:
+									print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
+								addedOrderbookDocs = addedOrderbookDocs + 1
+
+						else:
+							raise IOError("Invalid orderbook item")
+					else:
+						print ("Channel with type: " + channelType + " is not yet supported")
+				except:
+					print ("")
+					print ('HORSE SHIT')
+					print (resultData)
+		except:
+			raise
 
 
 	def connectOrderbookSocket(self):
 		# connectWebsocket()
-		symbols = self.getSymbols()
-		print ("ATTEMPTING TO CONNECT " + str(len(symbols)) + " CURRENCY PAIRS TO THE ORDERBOOK FEED...")
+		print ("ATTEMPTING TO CONNECT " + str(len(self.symbols)) + " CURRENCY PAIRS TO THE ORDERBOOK FEED...")
 # 		   "event": "subscribe",
 #     "channel": "book",
 #     "pair": "BTCUSD",
@@ -186,7 +283,7 @@ class Bitfinex():
 #     "len":"<LENGTH>"
 # }))
 		try:
-			for symbol in symbols:
+			for symbol in self.symbols:
 				self.ws.send(json.dumps({
 					"event": "subscribe",
 				    "channel": "book",
@@ -204,80 +301,5 @@ class Bitfinex():
 		except:
 			raise
 		print ("FINISHED CONNECTING CURRENCY PAIRS TO DATA FEED SUCCESSFULLY.")
-		channelDict = {}
-		channelMappings = {}
-		allChannelsSubscribed = False
-		addedOrderbookDocs = 0
-		while (True):
-			resultData = self.ws.recv()
-			try:
-				dataJson = json.loads(resultData)
-				if ("chanId" in dataJson and "event" in dataJson and allChannelsSubscribed == False):
-					# print (dataJson)
-					pairName = str(dataJson["pair"])
-					print ("PAIR NAME IS: " + pairName)
-					pairChannelType = str(dataJson["channel"])
-					identifier = pairName
-					channelId = dataJson["chanId"]
-					channelDict[channelId] = identifier
-					channelMappings[channelId] = dataJson
-					if (len(channelDict) == len(symbols)):
-						allChannelsSubscribed = True
-						print ("all channels subscribed..")
-				else:
-					print ("^__^")
-					theResult = list(dataJson)
-					print ("")
-					print (channelMappings)
-					print ("")
-					print (theResult)
-					try:
-						curChanId = int(theResult[0])
-						print (curChanId in channelMappings)
-					except ValueError:
-						pass
-					except:
-						raise
-					try:
-						chanId = int(theResult[0])
-						# dtoType = str(channelDict[chanId])
-						dtoType = str(channelMappings[chanId]["pair"])
-						channelType = str(channelMappings[chanId]["channel"])
-						if channelType == "book":
-							if len(dataJson) == 2:
-								orderList = theResult[1]
-								if orderList == 'hb':
-									print ("SKIP (heartbeat)")
-								else:
-									for orderItem in orderList:
-										orderDto = self.getOrderDto(orderItem, dtoType)
-										postedDto = self.postDto(orderDto)
-										if postedDto == False:
-											raise IOError("Unable to add new document to ES..." )
-										else:
-											if addedOrderbookDocs % 1000 == 0:
-												print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
-											addedOrderbookDocs = addedOrderbookDocs + 1
-
-							elif len(dataJson) == 4:
-								dataSet = dataJson[1:]
-								print (dtoType)
-								curDto = self.getOrderDto(dataSet, dtoType)
-								postedDto = self.postDto(curDto)
-								if postedDto == False:
-									raise IOError("Unable to add new document to ES..." )
-								else:
-									if addedOrderbookDocs % 1000 == 0:
-										print (str(addedOrderbookDocs) + " Orderbook Entries Added So Far This Run...")
-									addedOrderbookDocs = addedOrderbookDocs + 1
-
-							else:
-								raise IOError("Invalid orderbook item")
-						else:
-							print ("Channel with type: " + channelType + " is not yet supported")
-					except:
-						print ("")
-						print ('HORSE SHIT')
-						print (resultData)
-			except:
-				raise
+		channelMappings = self.getChannelMappings()
+		self.runConnector(channelMappings)
