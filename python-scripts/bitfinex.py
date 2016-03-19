@@ -108,8 +108,9 @@ class Bitfinex():
 					"price": {"type": "float"},
 					"volume": {"type": "float"},
 					"order_type" : { "type": "string"},
-					"absolute_volume" : {"type":"string"},
-					"currency_pair": {"type":"string"}
+					"absolute_volume" : {"type":"float"},
+					"currency_pair": {"type":"string"}, 
+					"timestamp": { "type": "string", "index": "no"}
 				 }
 			}
 		}
@@ -131,7 +132,8 @@ class Bitfinex():
 					"daily_delta": {"type" : "float"},
 					"ask_volume": {"type": "float"},
 					"bid_volume": {"type": "float"},
-					"bid": {"type": "float"}
+					"bid": {"type": "float"}, 
+					"currency_pair": {"type":"string"}
 				}
 			}
 		}
@@ -177,7 +179,20 @@ class Bitfinex():
 			elif type(sliceData) is list: 
 				print ("SLICE DATA AND LIST")
 				for data in sliceData: 
-					print(data)
+					if len(data) == 4: 
+						tradeDto["sequence_id"] = str(data[0])
+						tradeDto["timestamp"] = str(data[1])
+						tradeDto["price"] = float(data[2])
+						volVal = data[3]
+						tradeDto["volume"] = float(volVal)
+						if volVal < 0: 
+							absVol = volVal * -1
+							tradeDto["order_type"] = "ASK" 
+						else: 
+							absVol = volVal
+							tradeDto["order_type"] = "BID"
+						tradeDto["absolute_volume"] = float(absVol)
+					# print(data)
 		else: 
 			print ("NOT LENGTH TWO") 
 			raise IOError("completed trade result is length two with chan ID not length 2 heart beat or slice list")
