@@ -237,14 +237,14 @@ class Bitfinex():
 				print ("^^^^^^^^^^^^^WHO KNOCKS^^^^^^^^^^^^^^")
 			else:
 				for orderItem in orderList:
-					orderDto = self.getOrderDto(orderItem, dtoType)
+					orderDto = self.getOrderDto(orderItem, currencyPairSymbol)
 					postedDto = self.postDto(orderDto)
 					if postedDto == False:
 						raise IOError("Unable to add new document to ES..." )
 		elif len(dataJson) == 4:
 			dataSet = dataJson[1:]
-			print (dtoType)
-			curDto = self.getOrderDto(dataSet, dtoType)
+			print (currencyPairSymbol)
+			curDto = self.getOrderDto(dataSet, currencyPairSymbol)
 			postedDto = self.postDto(curDto)
 			if postedDto == False:
 				raise IOError("Unable to add new document to ES..." )
@@ -271,8 +271,8 @@ class Bitfinex():
 					raise
 				try:
 					chanId = int(theResult[0])
-					# dtoType = str(channelDict[chanId])
-					dtoType = str(self.channelMappings[chanId]["pair"])
+					# currencyPairSymbol = str(channelDict[chanId])
+					currencyPairSymbol = str(self.channelMappings[chanId]["pair"])
 					channelType = str(self.channelMappings[chanId]["channel"])
 					if channelType == "book":
 						self.updateOrderBookIndex(theResult)
@@ -280,7 +280,7 @@ class Bitfinex():
 						print ("Channel with type: " + channelType + " is not yet supported")
 				except:
 					print ("")
-					print ('HORSE SHIT')
+					print ("HORSE SHIT FROM CHANNEL: " + str(channelType))
 					print (resultData)
 		except:
 			raise
