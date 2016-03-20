@@ -62,7 +62,10 @@ class Okcoin():
 
 	def subscribePublicChannels(self, connector):
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
+
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
@@ -152,12 +155,9 @@ class Okcoin():
 				}
 			}
 		}
-
-		 #
-
 		return self.tickerMapping
 
-	def getTickerDto(self, dataSet): 
+	def getTickerDto(self, dataSet, currencyPair): 
 		dto = {}
 		dto["uuid"] = str(uuid.uuid4())
 		dto["date"] = datetime.datetime.now(TIMEZONE)
@@ -168,11 +168,50 @@ class Okcoin():
 		dto["ask"] = float(dataSet["sell"])
 		dto["bid"] = float(dataSet["buy"])
 		dto["high"] = float(dataSet["high"])
+		dto["currency_pair"] = str(currencyPair)
 		return dto
 
 	def postDto(self, dto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
 		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=dto)
 		return newDocUploadRequest["created"]
+
+	def getDepthDtoList(self, dataSet, currencyPair): 
+		dtoList = []
+	
+		print ("------")
+		for bid in dataSet["bids"]: 
+			dto = {}
+			if len(bid) == 2: 
+				print (bid) 
+				dto["uuid"] = str(uuid.uuid4())
+				dto["date"] = datetime.datetime.now(TIMEZONE)
+				dto["currency_pair"] = str(currencyPair)
+				dto["timestamp"] = str(dataSet["timestamp"])
+				dto["price"] = float(bid[0])
+				volumeVal = float(bid[1]) 
+				dto["volume"] = float(volumeVal)
+				dto["absolute_volume"] = float(volumeVal)
+				dto["order_type"] = "BID"
+				dto["count"] = float(1)
+				dtoList.append(dto)
+		for ask in dataSet["asks"]: 
+			dto = {}
+			if len(ask) == 2: 
+				print (ask) 
+				dto["uuid"] = str(uuid.uuid4())
+				dto["date"] = datetime.datetime.now(TIMEZONE)
+				dto["currency_pair"] = str(currencyPair)
+				dto["timestamp"] = str(dataSet["timestamp"])
+				dto["price"] = float(ask[0])
+				volumeVal = float(ask[1])
+				volumeVal = volumeVal * -1
+				dto["volume"] = float() 
+				dto["absolute_volume"] = float(volumeVal)
+				dto["order_type"] = "ASK"
+				dto["count"] = float(1)
+				dtoList.append(dto)
+		print ("------")
+		return dtoList
 
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
@@ -180,9 +219,20 @@ class Okcoin():
 		for dataSet in jsonData: 
 		 	curChannel = dataSet["channel"]
 		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-		 		dto = self.getTickerDto(dataSet["data"])
+		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
 		 		successful = self.postDto(dto, "live_crypto_tickers")
 		 		print (successful)
+	 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
+		 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
+		 		successful = self.postDto(dto, "live_crypto_tickers")
+		 		print (successful)
+	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
+	 			dto = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+	 			print(dto)
+ 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
+	 			dto = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+
+
 		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 

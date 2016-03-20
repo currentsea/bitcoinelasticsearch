@@ -228,7 +228,7 @@ class Bitfinex():
 				return tradeDto
 
 	def postDto(self, dto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
-		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=dto)
+		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, id=uuid.uuid4(), body=dto)
 		return newDocUploadRequest["created"]
 
 	def getChannelMappings(self):
@@ -378,7 +378,16 @@ class Bitfinex():
 									print ('HB INTERVAL OF 10!') 
 						elif channelType == "ticker": 
 							tickerDto = self.getTickerDto(theResult, dataJson, currencyPairSymbol)
-							self.postDto(tickerDto, "live_crypto_tickers", DEFAULT_DOCTYPE_NAME)
+							print("OOOOOO")							
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print("OOOOOO")
+							print (self.postDto(tickerDto, "live_crypto_tickers", DEFAULT_DOCTYPE_NAME))
 				except ValueError:
 					pass
 				except KeyError:
