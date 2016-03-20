@@ -335,7 +335,7 @@ class Bitfinex():
 		tickerDto["bid_volume"] = bidVol
 		return tickerDto
 
-	def runConnector(self):
+	def run(self):
 		try:
 			resultData = self.ws.recv()
 			self.channelMappings = self.getChannelMappings()
@@ -389,6 +389,3 @@ class Bitfinex():
 					raise
 		except:
 			raise
-
-	def run(self):
-		self.runConnector()
