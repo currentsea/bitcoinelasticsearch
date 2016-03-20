@@ -9,7 +9,7 @@ import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re
 DEFAULT_DOCTYPE_NAME = "okcoin"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
 DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
-DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
+DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades"]
 TIMEZONE = pytz.timezone('UTC')
@@ -249,29 +249,29 @@ class Okcoin():
 		jsonData = self.getJsonData(okcoinData)
 		for dataSet in jsonData: 
 		 	curChannel = dataSet["channel"]
-		 	# if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-		 	# 	dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
-		 	# 	successful = self.postDto(dto, "live_crypto_tickers")
-		 	# 	print (successful)
-	 		# elif curChannel == "ok_sub_spotusd_ltc_ticker": 
-		 	# 	dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
-		 	# 	successful = self.postDto(dto, "live_crypto_tickers")
-		 	# 	print (successful)
-	 		# elif curChannel == "ok_sub_spotusd_btc_depth_60": 
-	 		# 	dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
-	 		# 	for dto in dtoList: 
-			 # 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 # 		print ("YEY")
-			 # 		print (successful)
+		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
+		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
+		 		successful = self.postDto(dto, "live_crypto_tickers")
+		 		print (successful)
+	 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
+		 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
+		 		successful = self.postDto(dto, "live_crypto_tickers")
+		 		print (successful)
+	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
+	 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+	 			for dto in dtoList: 
+			 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 		print ("YEY")
+			 		print (successful)
 
-	 		# 	# print(dtoList)
- 			# elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
-	 		# 	dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
-	 		# 	for dto in dtoList: 
-			 # 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 # 		print ("YEY")
-			 # 		print (successful)
-	 		if curChannel == "ok_sub_spotusd_btc_trades": 
+	 			# print(dtoList)
+ 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
+	 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+	 			for dto in dtoList: 
+			 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 		print ("YEY")
+			 		print (successful)
+	 		elif curChannel == "ok_sub_spotusd_btc_trades": 
 	 			print ('A TRADE')
 	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
 	 			for dto in completedTradeDtoList: 
