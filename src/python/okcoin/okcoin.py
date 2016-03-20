@@ -184,7 +184,6 @@ class Okcoin():
 		for bid in dataSet["bids"]: 
 			dto = {}
 			if len(bid) == 2: 
-				print (bid) 
 				dto["uuid"] = str(uuid.uuid4())
 				dto["date"] = datetime.datetime.now(TIMEZONE)
 				dto["currency_pair"] = str(currencyPair)
@@ -199,7 +198,6 @@ class Okcoin():
 		for ask in dataSet["asks"]: 
 			dto = {}
 			if len(ask) == 2: 
-				print (ask) 
 				dto["uuid"] = str(uuid.uuid4())
 				dto["date"] = datetime.datetime.now(TIMEZONE)
 				dto["currency_pair"] = str(currencyPair)
@@ -216,14 +214,14 @@ class Okcoin():
 		return dtoList
 
 	def getCompletedTradeDtoList(self, dataSet, currencyPair): 
-		print (dataSet)
 		dtoList = []
+
+		print (dataSet)
 # [tid, price, amount, time, type]
 		for completedTrade in dataSet: 
 			dto = {}
 			dto["order_id"] = str(completedTrade[0])
 			dto["price"] = float(completedTrade[1])
-
 			dto["uuid"] = str(uuid.uuid4())
 			dto["date"] = datetime.datetime.now(TIMEZONE)
 			dto["currency_pair"] = str(currencyPair)
@@ -243,7 +241,8 @@ class Okcoin():
 				raise IOError("WTF order type is not ask or bid for completed trade")
 			dto["timestamp"] = str(timestamp)
 			dtoList.append(dto)
-		return dto
+
+		return dtoList
 
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
@@ -273,10 +272,19 @@ class Okcoin():
 			 # 		print ("YEY")
 			 # 		print (successful)
 	 		if curChannel == "ok_sub_spotusd_btc_trades": 
-	 			print (self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD"))
+	 			print ('A TRADE')
+	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
+	 			for dto in completedTradeDtoList: 
+			 		successful = self.postDto(dto, "live_crypto_trades")
+			 		print ("YEY")
+			 		print (successful)
  			elif curChannel == " ok_sub_spotusd_ltc_trades": 
- 				print (self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD"))
-		# jsonData = getJsonData(okcoinData)
+	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
+	 			print (completedTradeDtoList)
+	 			for dto in completedTradeDtoList: 
+			 		successful = self.postDto(dto, "live_crypto_trades")
+			 		print ("YEY")
+			 		print (successful)		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 
 		# 	# if curChannel == "ok_btcusd_ticker": 
@@ -294,7 +302,7 @@ class Okcoin():
 		# 	# else: 
 		# 	# 	print("WTF")
 		# 	print(curChannel)
-		print (connection)
+		# print (connection)
 		print("-----") 
 		pass
 
