@@ -15,13 +15,12 @@ DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto
 TIMEZONE = pytz.timezone('UTC')
 
 class Okcoin(): 
-	def __init__(self, wsUrl=DEFAULT_WEBSOCKETS_URL, esUrl=DEFAULT_ELASTICSEARCH_URL, apiUrl=DEFAULT_API_URL):
+	def __init__(self, wsUrl=DEFAULT_WEBSOCKETS_URL, esUrl=DEFAULT_ELASTICSEARCH_URL):
 		self.wsUrl = wsUrl
 		self.esUrl = esUrl
-		self.apiUrl = apiUrl
 		self.connectElasticsearch()
 		self.createIndices()
-		
+
 		# self.symbols = self.getSymbols()
 		# self.connectWebsocket()
 		# self.connectElasticsearch()
@@ -29,10 +28,10 @@ class Okcoin():
 		# self.getCompletedTradesMapping()
 		# self.getOrderbookElasticsearchMapping()
 		# self.createMappings()
-	def run(): 
+	def run(self): 
 		websocket.enableTrace(False)
-		ws = websocket.WebSocketApp(OKCOIN_WEBSOCKET_URL, on_message = on_message, on_error = websocketError, on_close = websocketClose)
-		ws.on_open = subscribePublicChannels
+		ws = websocket.WebSocketApp(self.wsUrl, on_message = self.websocketMessage, on_error = self.websocketError, on_close = self.websocketClose)
+		ws.on_open = self.subscribePublicChannels
 		ws.run_forever()
 
 	def createIndices(self, indecesList=DEFAULT_INDECES):
@@ -65,27 +64,27 @@ class Okcoin():
 		except:
 			raise		
 
-	def subscribePublicChannels(self):
-		self.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
-		self.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
-		self.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
+	def subscribePublicChannels(self, connector):
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
 	def inflate(okcoinData):
 	    decompressedData = zlib.decompressobj(
@@ -102,26 +101,27 @@ class Okcoin():
 	def websocketClose(self, event):
 	    print (event)
 
-	def websocketMessage(self, event):
-		okcoinData = inflate(event) #data decompress
-		jsonData = getJsonData(okcoinData)
-		print (jsonData)
-		for item in jsonData: 
-			curChannel = item["channel"]
-			# if curChannel == "ok_btcusd_ticker": 
-			# 	self.injectTickerData(self, event, item)
-			# elif curChannel == "ok_btcusd_depth": 
-			# 	processOrderbook(self, event, item) 
-			# elif curChannel == "ok_btcusd_trades_v1": 
-			# 	processCompletedTrades(jsonData)
-			# elif curChannel in CANDLE_LIST: 
-			# 	processCandleStick(curChannel, item)
-			# elif curChannel in FUTURES_CONTRACT_TYPES: 
-			# 	processTheFuture(curChannel, item) 
-			# elif curChannel == "ok_btcusd_future_index": 
-			# 	indexTheFuture(curChannel, item)
-			# else: 
-			# 	print("WTF")
-			print(curChannel)
+	def websocketMessage(self, connection, event):
+		# okcoinData = inflate(event) #data decompress
+		# jsonData = getJsonData(okcoinData)
+		# print (jsonData)
+		# for item in jsonData: 
+		# 	curChannel = item["channel"]
+		# 	# if curChannel == "ok_btcusd_ticker": 
+		# 	# 	self.injectTickerData(self, event, item)
+		# 	# elif curChannel == "ok_btcusd_depth": 
+		# 	# 	processOrderbook(self, event, item) 
+		# 	# elif curChannel == "ok_btcusd_trades_v1": 
+		# 	# 	processCompletedTrades(jsonData)
+		# 	# elif curChannel in CANDLE_LIST: 
+		# 	# 	processCandleStick(curChannel, item)
+		# 	# elif curChannel in FUTURES_CONTRACT_TYPES: 
+		# 	# 	processTheFuture(curChannel, item) 
+		# 	# elif curChannel == "ok_btcusd_future_index": 
+		# 	# 	indexTheFuture(curChannel, item)
+		# 	# else: 
+		# 	# 	print("WTF")
+		# 	print(curChannel)
+		print (connection)
 		print("-----") 
 		pass
