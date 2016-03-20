@@ -227,64 +227,7 @@ class Bitfinex():
 					tradeDto["absolute_volume"] = float(absVol)
 				return tradeDto
 
-
-#    "<CHANNEL_ID>",
-#    "te",
-#    "<SEQ>",
-#    "<TIMESTAMP>",
-#    "<PRICE>",
-#    "<AMOUNT>"
-# ]
-# 						[
-#    "<CHANNEL_ID>",
-#    "tu",
-#    "<SEQ>",
-#    "<ID>",
-#    "<TIMESTAMP>",
-#    "<PRICE>",
-#    "<AMOUNT>"
-# ]
-	# if len(completedTrade) == 4:
-	# 	tradeDto["sequence_id"] = str(completedTrade[0])
-	# 	# tradeDto["timestamp"] = str(completedTrade[1])
-	# 	tradeDto["price"] = float(completedTrade[2])
-	# 	theAmount = float(completedTrade[3])
-	# 	tradeDto["amount"] = theAmount
-
-	# elif len(completedTrade) == 5:
-	# 	tradeDto["tradeId"] = str(completedTrade[1])
-	# 	tradeDto["timestamp"] = str(completedTrade[2])
-	# 	tradeDto["price"] = float(completedTrade[3])
-	# 	theAmount = float(completedTrade[4])
-	# 	tradeDto["amount"] = theAmount
-
-	# elif len(completedTrade) == 6:
-	# 	tradeDto["sequenceId"] = str(completedTrade[1])
-	# 	tradeDto["tradeId"] = str(completedTrade[2])
-	# 	tradeDto["timestamp"] = str(completedTrade[3])
-	# 	tradeDto["price"] = float(completedTrade[4])
-	# 	theAmount = float(completedTrade[5])
-	# 	tradeStatusType = completedTrade[1]
-	# 	if tradeStatusType['te']:
-	# 		pass
-	# 	elif tradeStatusType['tu']:
-	# 		print ("TRADE STATUS TYPE IS tu")
-	# 	tradeDto["uuid"] = uuidStr
-	# 	tradeDto["date"] = recordDate
-	# 	tradeDto["volume"] = float(completedTrade[5])
-
 	def postDto(self, dto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
-		# self.connectElasticsearch()
-		# try:
-		# 	es.indices.create(name)
-		# 	try:
-		# 		mappingDto = getOrderbookElasticsearchMapping()
-		# 		es.indices.put_mapping(index=indexName, doc_type=docType, body=mappingDto)
-		# 		print ("Created mappings for " + str(docType))
-		# 	except:
-		# 		pass
-		# except:
-		# 	pass
 		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=dto)
 		return newDocUploadRequest["created"]
 
