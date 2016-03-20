@@ -158,8 +158,21 @@ class Okcoin():
 		return self.tickerMapping
 
 	def getTickerDto(self, dataSet): 
-		print (dataSet)
+		dto = {}
+		dto["uuid"] = str(uuid.uuid4())
+		dto["date"] = datetime.datetime.now(TIMEZONE)
+		dto["volume"] = float(str(dataSet["vol"].replace(",","")))
+		dto["timestamp"] = str(dataSet["timestamp"])
+		dto["last_price"] = float(dataSet["last"])
+		dto["low_price"] = float(dataSet["low"])
+		dto["ask"] = float(dataSet["sell"])
+		dto["bid"] = float(dataSet["buy"])
+		dto["high"] = float(dataSet["high"])
+		return dto
 
+	def postDto(self, dto, indexName=DEFAULT_INDEX_NAME, docType=DEFAULT_DOCTYPE_NAME):
+		newDocUploadRequest = self.es.create(index=indexName, doc_type=docType, ignore=[400], id=uuid.uuid4(), body=dto)
+		return newDocUploadRequest["created"]
 
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
@@ -167,7 +180,9 @@ class Okcoin():
 		for dataSet in jsonData: 
 		 	curChannel = dataSet["channel"]
 		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-		 		self.getTickerDto(dataSet["data"])
+		 		dto = self.getTickerDto(dataSet["data"])
+		 		successful = self.postDto(dto, "live_crypto_tickers")
+		 		print (successful)
 		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 

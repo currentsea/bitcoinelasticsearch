@@ -308,7 +308,7 @@ class Bitfinex():
 		uuidVar = uuid.uuid4()
 		uuidStr = str(uuidVar)
 		tickerDto["uuid"] = str(uuidVar)
-		tickerDto["recordDate"] = recordDate
+		tickerDto["date"] = recordDate
 		tickerDto["currency_pair"] = currencyPairSymbol
 
 		print (tickerData)
