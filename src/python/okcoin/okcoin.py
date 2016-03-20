@@ -20,14 +20,10 @@ class Okcoin():
 		self.esUrl = esUrl
 		self.connectElasticsearch()
 		self.createIndices()
-
-		# self.symbols = self.getSymbols()
-		# self.connectWebsocket()
-		# self.connectElasticsearch()
-		# self.createIndices()
-		# self.getCompletedTradesMapping()
-		# self.getOrderbookElasticsearchMapping()
-		# self.createMappings()
+		self.getTickerMapping()
+		self.getCompletedTradesMapping()
+		self.getOrderbookElasticsearchMapping()
+		self.createMappings()
 	def run(self): 
 		websocket.enableTrace(False)
 		ws = websocket.WebSocketApp(self.wsUrl, on_message = self.websocketMessage, on_error = self.websocketError, on_close = self.websocketClose)
@@ -65,7 +61,7 @@ class Okcoin():
 			raise		
 
 	def subscribePublicChannels(self, connector):
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_ticker','binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_depth', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
@@ -99,13 +95,82 @@ class Okcoin():
 	def websocketClose(self, event):
 	    print (event)
 
+	def getOrderbookElasticsearchMapping(self):
+		self.orderbookMapping = {
+			"okcoin": {
+				"properties": {
+					"currency_pair": { "type": "string"},
+					"uuid": { "type": "string", "index": "no"},
+					"date": {"type": "date"},
+					"price": {"type": "float"},
+					"count": {"type": "float"},
+					"volume": {"type" : "float"},
+					"absolute_volume": { "type": "float"},
+					"order_type": { "type": "string"}
+				}
+			}
+		}
+		return self.orderbookMapping
+
+	def getCompletedTradesMapping(self):
+		self.completedTradeMapping = {
+			"okcoin": {
+				"properties": {
+					"uuid": { "type": "string", "index": "no" },
+					"date" : { "type": "date" },
+					"sequence_id": { "type" : "string", "index":"no"},
+					"order_id":{  "type" : "string", "index":"no"},
+					"price": {"type": "float"},
+					"volume": {"type": "float"},
+					"order_type" : { "type": "string"},
+					"absolute_volume" : {"type":"float"},
+					"currency_pair": {"type":"string"}, 
+					"timestamp": { "type": "string", "index": "no"}
+				 }
+			}
+		}
+		return self.completedTradeMapping
+
+	def getTickerMapping(self):
+		self.tickerMapping = {
+			"okcoin": {
+				"properties": {
+					"uuid": { "type": "string", "index": "no"},
+					"date": {"type": "date"},
+					"last_price": {"type": "float"},
+					"timestamp": {"type": "string", "index": "no"},
+					"volume": {"type": "float"},
+					"high": {"type": "float"},
+					"ask": {"type": "float"},
+					"low": {"type": "float"},
+					"daily_change": {"type": "float"},
+					"daily_delta": {"type" : "float"},
+					"ask_volume": {"type": "float"},
+					"bid_volume": {"type": "float"},
+					"bid": {"type": "float"}, 
+					"currency_pair": {"type":"string"}
+				}
+			}
+		}
+
+		 #
+
+		return self.tickerMapping
+
+	def getTickerDto(self, dataSet): 
+		print (dataSet)
+
+
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
-		print (okcoinData)
+		jsonData = self.getJsonData(okcoinData)
+		for dataSet in jsonData: 
+		 	curChannel = dataSet["channel"]
+		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
+		 		self.getTickerDto(dataSet["data"])
 		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 
-		# 	curChannel = item["channel"]
 		# 	# if curChannel == "ok_btcusd_ticker": 
 		# 	# 	self.injectTickerData(self, event, item)
 		# 	# elif curChannel == "ok_btcusd_depth": 
@@ -124,3 +189,10 @@ class Okcoin():
 		print (connection)
 		print("-----") 
 		pass
+
+	def getJsonData(self, okcoinData): 
+		tempData = okcoinData
+		dataStr = tempData.decode(encoding='UTF-8')
+		jsonData =json.loads(dataStr)
+		return jsonData
+
