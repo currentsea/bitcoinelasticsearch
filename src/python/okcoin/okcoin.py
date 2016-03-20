@@ -86,10 +86,8 @@ class Okcoin():
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
-	def inflate(okcoinData):
-	    decompressedData = zlib.decompressobj(
-	            -zlib.MAX_WBITS 
-	    )
+	def inflate(self, okcoinData):
+	    decompressedData = zlib.decompressobj(-zlib.MAX_WBITS)
 	    inflatedData = decompressedData.decompress(okcoinData)
 	    inflatedData += decompressedData.flush()
 	    return inflatedData
@@ -102,7 +100,8 @@ class Okcoin():
 	    print (event)
 
 	def websocketMessage(self, connection, event):
-		# okcoinData = inflate(event) #data decompress
+		okcoinData = self.inflate(event) #data decompress
+		print (okcoinData)
 		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 
