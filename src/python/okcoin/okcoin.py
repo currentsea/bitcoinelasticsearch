@@ -227,10 +227,19 @@ class Okcoin():
 		 		successful = self.postDto(dto, "live_crypto_tickers")
 		 		print (successful)
 	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
-	 			dto = self.getDepthDtoList(dataSet["data"], "BTCUSD")
-	 			print(dto)
+	 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+	 			for dto in dtoList: 
+			 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 		print ("YEY")
+			 		print (successful)
+
+	 			# print(dtoList)
  			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
-	 			dto = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+	 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+	 			for dto in dtoList: 
+			 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 		print ("YEY")
+			 		print (successful)
 
 
 		# jsonData = getJsonData(okcoinData)
