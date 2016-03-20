@@ -65,25 +65,27 @@ class Okcoin():
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
 
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
-		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
+		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
 	def inflate(self, okcoinData):
 	    decompressedData = zlib.decompressobj(-zlib.MAX_WBITS)
@@ -213,35 +215,67 @@ class Okcoin():
 		print ("------")
 		return dtoList
 
+	def getCompletedTradeDtoList(self, dataSet, currencyPair): 
+		print (dataSet)
+		dtoList = []
+# [tid, price, amount, time, type]
+		for completedTrade in dataSet: 
+			dto = {}
+			dto["order_id"] = str(completedTrade[0])
+			dto["price"] = float(completedTrade[1])
+
+			dto["uuid"] = str(uuid.uuid4())
+			dto["date"] = datetime.datetime.now(TIMEZONE)
+			dto["currency_pair"] = str(currencyPair)
+			absVol = float(completedTrade[2])
+			dto["absolute_volume"] = float(absVol)
+			timestamp = str(completedTrade[3])
+			orderType = str(completedTrade[4])
+			orderType = orderType.upper()
+			dto["order_type"] = orderType
+			if orderType == "BID": 
+				volumeVal = absVol * -1
+				dto["volume"] = float(volumeVal)
+			elif orderType == "ASK": 
+				volumeVal = absVol
+				dto["volume"] = float(volumeVal)
+			else: 
+				raise IOError("WTF order type is not ask or bid for completed trade")
+			dto["timestamp"] = str(timestamp)
+			dtoList.append(dto)
+		return dto
+
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
 		jsonData = self.getJsonData(okcoinData)
 		for dataSet in jsonData: 
 		 	curChannel = dataSet["channel"]
-		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
-		 		successful = self.postDto(dto, "live_crypto_tickers")
-		 		print (successful)
-	 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
-		 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
-		 		successful = self.postDto(dto, "live_crypto_tickers")
-		 		print (successful)
-	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
-	 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
-	 			for dto in dtoList: 
-			 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 		print ("YEY")
-			 		print (successful)
+		 	# if curChannel ==  "ok_sub_spotusd_btc_ticker": 
+		 	# 	dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
+		 	# 	successful = self.postDto(dto, "live_crypto_tickers")
+		 	# 	print (successful)
+	 		# elif curChannel == "ok_sub_spotusd_ltc_ticker": 
+		 	# 	dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
+		 	# 	successful = self.postDto(dto, "live_crypto_tickers")
+		 	# 	print (successful)
+	 		# elif curChannel == "ok_sub_spotusd_btc_depth_60": 
+	 		# 	dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+	 		# 	for dto in dtoList: 
+			 # 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 # 		print ("YEY")
+			 # 		print (successful)
 
-	 			# print(dtoList)
- 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
-	 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
-	 			for dto in dtoList: 
-			 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 		print ("YEY")
-			 		print (successful)
-
-
+	 		# 	# print(dtoList)
+ 			# elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
+	 		# 	dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+	 		# 	for dto in dtoList: 
+			 # 		successful = self.postDto(dto, "live_crypto_orderbooks")
+			 # 		print ("YEY")
+			 # 		print (successful)
+	 		if curChannel == "ok_sub_spotusd_btc_trades": 
+	 			print (self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD"))
+ 			elif curChannel == " ok_sub_spotusd_ltc_trades": 
+ 				print (self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD"))
 		# jsonData = getJsonData(okcoinData)
 		# print (jsonData)
 		# for item in jsonData: 
