@@ -251,59 +251,28 @@ class Okcoin():
 		 	curChannel = dataSet["channel"]
 		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
 		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
-		 		successful = self.postDto(dto, "live_crypto_tickers")
-		 		print (successful)
+		 		self.postDto(dto, "live_crypto_tickers")
 	 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
 		 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
-		 		successful = self.postDto(dto, "live_crypto_tickers")
-		 		print (successful)
+		 		self.postDto(dto, "live_crypto_tickers")
 	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
 	 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
 	 			for dto in dtoList: 
-			 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 		print ("YEY")
-			 		print (successful)
-
-	 			# print(dtoList)
+			 		self.postDto(dto, "live_crypto_orderbooks")
  			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
 	 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
 	 			for dto in dtoList: 
-			 		successful = self.postDto(dto, "live_crypto_orderbooks")
-			 		print ("YEY")
-			 		print (successful)
+			 		self.postDto(dto, "live_crypto_orderbooks")
 	 		elif curChannel == "ok_sub_spotusd_btc_trades": 
 	 			print ('A TRADE')
 	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
 	 			for dto in completedTradeDtoList: 
-			 		successful = self.postDto(dto, "live_crypto_trades")
-			 		print ("YEY")
-			 		print (successful)
- 			elif curChannel == " ok_sub_spotusd_ltc_trades": 
+			 		self.postDto(dto, "live_crypto_trades")
+ 			elif curChannel == "ok_sub_spotusd_ltc_trades": 
 	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
 	 			print (completedTradeDtoList)
 	 			for dto in completedTradeDtoList: 
-			 		successful = self.postDto(dto, "live_crypto_trades")
-			 		print ("YEY")
-			 		print (successful)		# jsonData = getJsonData(okcoinData)
-		# print (jsonData)
-		# for item in jsonData: 
-		# 	# if curChannel == "ok_btcusd_ticker": 
-		# 	# 	self.injectTickerData(self, event, item)
-		# 	# elif curChannel == "ok_btcusd_depth": 
-		# 	# 	processOrderbook(self, event, item) 
-		# 	# elif curChannel == "ok_btcusd_trades_v1": 
-		# 	# 	processCompletedTrades(jsonData)
-		# 	# elif curChannel in CANDLE_LIST: 
-		# 	# 	processCandleStick(curChannel, item)
-		# 	# elif curChannel in FUTURES_CONTRACT_TYPES: 
-		# 	# 	processTheFuture(curChannel, item) 
-		# 	# elif curChannel == "ok_btcusd_future_index": 
-		# 	# 	indexTheFuture(curChannel, item)
-		# 	# else: 
-		# 	# 	print("WTF")
-		# 	print(curChannel)
-		# print (connection)
-		print("-----") 
+			 		self.postDto(dto, "live_crypto_trades")
 		pass
 
 	def getJsonData(self, okcoinData): 

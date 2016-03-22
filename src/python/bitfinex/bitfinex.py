@@ -25,7 +25,7 @@ DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades"]
 
-class Bitfinex():
+class Bitfinex:
 	def __init__(self, wsUrl=DEFAULT_WEBSOCKETS_URL, esUrl=DEFAULT_ELASTICSEARCH_URL, apiUrl=DEFAULT_API_URL):
 		self.wsUrl = wsUrl
 		self.esUrl = esUrl
