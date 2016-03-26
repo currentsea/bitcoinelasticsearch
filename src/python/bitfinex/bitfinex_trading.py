@@ -17,17 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import json
+import requests
+import bitfinex_properties
 from websocket import create_connection
 
-import bitfinex_properties
 
 class BitfinexPrivate: 
-	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET, wsUrl=bitfinex_properties.WEBSOCKET_URL): 
+	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET, wsUrl=bitfinex_properties.WEBSOCKET_URL, apiUrl=bitfinex_properties.REST_API_URL): 
 		self.apiKey = apiKey
 		self.apiSecret = apiSecret
 		self.wsUrl = wsUrl
+		self.apiUrl = apiUrl
 		self.connectWebsocket()
+		self.symbols = self.getSymbols()
+		self.channelMappings = self.getChannelMappings()
 
 	def connectWebsocket(self):
 		try:
@@ -35,6 +39,70 @@ class BitfinexPrivate:
 		except:
 			raise
 		return True
+
+	# def subscribeList(self, wsDataList): 
+	# 	counter = 0
+	# 	for item in wsData: 
+	# 		try: 
+	# 			self.ws.send(json.dumps(item))
+	# 		except: 
+	# 			pass
+	# def subscribe(self, wsData): 
+	# 	if type(wsData) is list: 
+			
+	# 	else: 
+	# 		try: 
+	# 			self.ws.send(json.dumps(wsData))
+	# 		except: 
+	# 			pass
+
+	def getSymbols(self):
+		symbolsApiEndpoint = self.apiUrl + "/symbols"
+		print ("SYMBOLS ENDPOINT: " + symbolsApiEndpoint)
+		try:
+			req = requests.get(symbolsApiEndpoint)
+			reqJson = req.json()
+		except:
+			raise
+		return reqJson
+
+	def subscribeAllChannels(self): 
+		for symbol in self.symbols:
+			self.ws.send(json.dumps({"event": "subscribe", "channel": "book", "pair": symbol, "prec": "P0",  "len":"100"}))
+			self.ws.send(json.dumps({"event": "subscribe", "channel": "ticker", "pair": symbol}))
+			self.ws.send(json.dumps({"event": "subscribe", "channel": "trades", "pair": symbol}))
+
+	def getChannelMappings(self):
+		allChannelsSubscribed = False
+		channelDict = {}
+		channelMappings = {}
+		self.subscribeAllChannels()
+
+		while (allChannelsSubscribed == False):
+			resultData = self.ws.recv()
+			try:
+				dataJson = json.loads(resultData)
+					# print (dataJson)
+				pairName = str(dataJson["pair"])
+				pairChannelType = str(dataJson["channel"])
+				identifier = pairName
+				channelId = dataJson["chanId"]
+				channelDict[channelId] = identifier
+				channelMappings[channelId] = dataJson
+				print ("SUBSCRIBE TO CHANNEL " + str(channelId) + " WITH PAIR NAME: " + pairName)
+				symbolLength = len(self.symbols)
+				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * # # # # # # # # 
+				targetLength = symbolLength * 3 
+				# IF THIS SAVED YOU HOURS OF DEBUGGING, YOU'RE FUCKING WELCOME * #
+				if (len(channelDict) == targetLength):
+					allChannelsSubscribed = True
+					print ("all channels subscribed..")
+			except TypeError:
+				pass
+			except KeyError:
+				print resultData
+				pass
+		return channelMappings
 
 
 if __name__ == "__main__": 
