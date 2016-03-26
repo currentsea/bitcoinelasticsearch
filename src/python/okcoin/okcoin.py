@@ -9,7 +9,8 @@ import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re
 DEFAULT_DOCTYPE_NAME = "okcoin"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
 DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
-DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
+# DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
+DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades"]
 TIMEZONE = pytz.timezone('UTC')
@@ -24,6 +25,7 @@ class Okcoin():
 		self.getCompletedTradesMapping()
 		self.getOrderbookElasticsearchMapping()
 		self.createMappings()
+		
 	def run(self): 
 		websocket.enableTrace(False)
 		ws = websocket.WebSocketApp(self.wsUrl, on_message = self.websocketMessage, on_error = self.websocketError, on_close = self.websocketClose)
@@ -215,9 +217,6 @@ class Okcoin():
 
 	def getCompletedTradeDtoList(self, dataSet, currencyPair): 
 		dtoList = []
-
-		print (dataSet)
-# [tid, price, amount, time, type]
 		for completedTrade in dataSet: 
 			dto = {}
 			dto["order_id"] = str(completedTrade[0])
@@ -241,7 +240,6 @@ class Okcoin():
 				raise IOError("WTF order type is not ask or bid for completed trade")
 			dto["timestamp"] = str(timestamp)
 			dtoList.append(dto)
-
 		return dtoList
 
 	def websocketMessage(self, connection, event):
