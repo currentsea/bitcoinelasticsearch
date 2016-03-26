@@ -39,12 +39,9 @@ class PoloinexWebsocketProtocol(WebSocketClientProtocol):
 # THE SOFTWARE.
 #
 ###############################################################################
-
 from os import environ
-
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
-
 from autobahn.wamp.types import SubscribeOptions
 from autobahn.twisted.wamp import ApplicationSession, ApplicationRunner
 
