@@ -18,22 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import simplejson
-import tornado.websocket
+from websocket import create_connection
 
-class EpiVizPyEndpoint(tornado.websocket.WebSocketHandler):
+import bitfinex_properties
 
-  def __init__(self, *args, **kwargs):
-      super(EpiVizPyEndpoint, self).__init__(*args, **kwargs)
+class BitfinexPrivate: 
+	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET): 
+		self.apiKey = apiKey
+		self.apiSecret = apiSecret
 
-  def open(self):
-      print ('new connection')
 
-  def on_message(self, json_message):
-      print ('message received ')
-      print(json_message)
-      message = simplejson.loads(json_message)
-
-  def on_close(self):
-      print ('closed connection') 
-      
+if __name__ == "__main__": 
+	BitfinexPrivate()
