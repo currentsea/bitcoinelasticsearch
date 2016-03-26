@@ -9,5 +9,6 @@
 
 
 #
-
-BITFINEX_API_KEY=
+WEBSOCKET_URL = "wss://api2.bitfinex.com:3000/ws"
+BITFINEX_API_KEY="abcdmymoneyhere"
+BITFINEX_API_SECRET"BDEWEdfwefqaewmymoneythere"

@@ -23,9 +23,18 @@ from websocket import create_connection
 import bitfinex_properties
 
 class BitfinexPrivate: 
-	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET): 
+	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET, wsUrl=bitfinex_properties.WEBSOCKET_URL): 
 		self.apiKey = apiKey
 		self.apiSecret = apiSecret
+		self.wsUrl = wsUrl
+		self.connectWebsocket()
+
+	def connectWebsocket(self):
+		try:
+			self.ws = create_connection(self.wsUrl)
+		except:
+			raise
+		return True
 
 
 if __name__ == "__main__": 
