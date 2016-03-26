@@ -17,11 +17,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+
+# from __future__ import absolute_import
+
+import time
 import json
+import hmac
+import base64
+import hashlib
 import requests
+import datetime
 import bitfinex_properties
 from websocket import create_connection
-
+# from decouple import config
 
 class BitfinexPrivate: 
 	def __init__(self, apiKey=bitfinex_properties.BITFINEX_API_KEY, apiSecret=bitfinex_properties.BITFINEX_API_SECRET, wsUrl=bitfinex_properties.WEBSOCKET_URL, apiUrl=bitfinex_properties.REST_API_URL): 
@@ -40,22 +49,6 @@ class BitfinexPrivate:
 			raise
 		return True
 
-	# def subscribeList(self, wsDataList): 
-	# 	counter = 0
-	# 	for item in wsData: 
-	# 		try: 
-	# 			self.ws.send(json.dumps(item))
-	# 		except: 
-	# 			pass
-	# def subscribe(self, wsData): 
-	# 	if type(wsData) is list: 
-			
-	# 	else: 
-	# 		try: 
-	# 			self.ws.send(json.dumps(wsData))
-	# 		except: 
-	# 			pass
-
 	def getSymbols(self):
 		symbolsApiEndpoint = self.apiUrl + "/symbols"
 		print ("SYMBOLS ENDPOINT: " + symbolsApiEndpoint)
@@ -67,22 +60,80 @@ class BitfinexPrivate:
 		return reqJson
 
 	def subscribeAllChannels(self): 
-		for symbol in self.symbols:
-			self.ws.send(json.dumps({"event": "subscribe", "channel": "book", "pair": symbol, "prec": "P0",  "len":"100"}))
-			self.ws.send(json.dumps({"event": "subscribe", "channel": "ticker", "pair": symbol}))
-			self.ws.send(json.dumps({"event": "subscribe", "channel": "trades", "pair": symbol}))
+		# for symbol in self.symbols:
+			# self.ws.send(json.dumps({"event": "subscribe", "channel": "book", "pair": symbol, "prec": "P0",  "len":"100"}))
+			# self.ws.send(json.dumps({"event": "subscribe", "channel": "ticker", "pair": symbol}))
+			# self.ws.send(json.dumps({"event": "subscribe", "channel": "trades", "pair": symbol}))
+			# # payload = {"event": "auth", "apiKey": self.apiKey}
+			
+			# payload = 
+			# payloadBytes = bytes(payload, encoding='utf-8')
+			# encodedData = base64.standard_b64encode(payloadBytes)
+			theNonce = float(time.time() * 1000000)
+			theNonceStr = 'AUTH' + str(theNonce)
+			hashDigest = hmac.new(self.apiSecret.encode('utf8'), theNonceStr.encode('utf-8'), hashlib.sha384)
+			# encodedData.encode('utf-8') 
+
+			signature = hashDigest.hexdigest()
+			reqBody = { 
+				"event": "auth", 
+				"apiKey": str(self.apiKey), 
+				"authSig": str(signature), 
+			    "authPayload": str(hashDigest)
+			}
+			# authJson = json.dumps(reqBody)
+			self.ws.send(json.dumps(reqBody))
+
+	def getNonce(self):
+		curTime = time.time()
+		nonce = str(int(curTime * 1000000))
+		authNonce = 'AUTH' + nonce 
+		return authNonce
+
+	# def signPayload(self, payload):
+
+
+		# return {
+		# 	"X-BFX-APIKEY": API_KEY,
+		# 	"X-BFX-SIGNATURE": signature,
+		# 	"X-BFX-PAYLOAD": data
+		# }
+
+# var
+#     crypto = require('crypto'),
+#     api_key = 'API_KEY',
+#     api_secret = 'API_SECRET',
+#     payload = 'AUTH' + (new Date().getTime()),
+#     signature = crypto.createHmac("sha384", api_secret).update(payload).digest('hex');
+# w.send(JSON.stringify({
+#     event: "auth",
+#     apiKey: api_key,
+#     authSig: signature,
+#     authPayload: payload
+# }));
+# // request
+# {  
+#    "event":"auth",
+#    "status":"OK",
+#    "chanId":0,
+#    "userId":"<USER_ID>"
+# }
+
+
+
+	def getMappingAuthentication(self): 
+		payload = 'AUTH' + datetime.datetime.utcnow()
 
 	def getChannelMappings(self):
 		allChannelsSubscribed = False
 		channelDict = {}
 		channelMappings = {}
 		self.subscribeAllChannels()
-
 		while (allChannelsSubscribed == False):
 			resultData = self.ws.recv()
+			print (resultData)
 			try:
 				dataJson = json.loads(resultData)
-					# print (dataJson)
 				pairName = str(dataJson["pair"])
 				pairChannelType = str(dataJson["channel"])
 				identifier = pairName
@@ -93,17 +144,23 @@ class BitfinexPrivate:
 				symbolLength = len(self.symbols)
 				# CHANNELS ARE ALL SUBSCRIBED WHEN SYMBOL LENGTH * # # # # # # # # 
 				targetLength = symbolLength * 3 
+				targetLength = targetLength + 1
+				# targetLength = 4 # fuck it 
 				# IF THIS SAVED YOU HOURS OF DEBUGGING, YOU'RE FUCKING WELCOME * #
 				if (len(channelDict) == targetLength):
 					allChannelsSubscribed = True
-					print ("all channels subscribed..")
 			except TypeError:
 				pass
-			except KeyError:
-				print resultData
+			except KeyError: 
 				pass
+			except: 
+				raise
 		return channelMappings
 
-
 if __name__ == "__main__": 
-	BitfinexPrivate()
+	that = BitfinexPrivate()
+#    "event":"auth",
+#    "status":"OK",
+#    "chanId":0,
+#    "userId":"<USER_ID>"
+# }
