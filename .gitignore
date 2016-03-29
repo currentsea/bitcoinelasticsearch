@@ -4,7 +4,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+src/python/bitfinex/bitfinex_properties.py
 # Distribution / packaging
 .Python
 env/
