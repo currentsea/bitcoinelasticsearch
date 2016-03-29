@@ -9,8 +9,8 @@ import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re
 DEFAULT_DOCTYPE_NAME = "okcoin"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
 DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
-# DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
-DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
+DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
+# DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_futures"]
 TIMEZONE = pytz.timezone('UTC')
@@ -65,15 +65,16 @@ class Okcoin():
 			raise		
 
 	def subscribePublicChannels(self, connector):
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
+
 		# ok_sub_spotusd_btc_kline_week
 				# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
 
-		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
 			# websocket.send("{'event':'addChannel','channel':'ok_sub_spotusd_X_kline_Y'}");
 		# klineList = []
 		# klineTypes = ['1min', '3min', '5min', '15min', '30min', '1hour', '2hour', '4hour', '6hour', '12hour', 'day', '3day', 'week']
