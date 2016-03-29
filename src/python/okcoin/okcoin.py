@@ -12,7 +12,7 @@ DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
 DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
 # DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
-DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_futures"]
+DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_candlesticks"]
 TIMEZONE = pytz.timezone('UTC')
 
 class Okcoin(): 
@@ -46,7 +46,7 @@ class Okcoin():
 			self.es.indices.put_mapping(index="live_crypto_trades", doc_type=DEFAULT_DOCTYPE_NAME, body=self.completedTradeMapping)
 			self.es.indices.put_mapping(index="live_crypto_tickers", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
 			klineMapping = self.getKlineMapping()
-			self.es.indices.put_mapping(index="live_crypto_futures", doc_type=DEFAULT_DOCTYPE_NAME, body=klineMapping)
+			self.es.indices.put_mapping(index="live_crypto_candlesticks", doc_type=DEFAULT_DOCTYPE_NAME, body=klineMapping)
 
 		except:
 			raise
@@ -363,7 +363,7 @@ class Okcoin():
 	 			print ("WE IN DA KLINE LIST!")
 	 			theData = dataSet["data"]
 	 			dto = self.getKline(theData, curChannel)
-	 			self.postDto(dto, "live_crypto_futures")
+	 			self.postDto(dto, "live_crypto_candlesticks")
 		pass
 
 	def getJsonData(self, okcoinData): 
