@@ -91,6 +91,12 @@ class Okcoin():
 			event = "{'event':'addChannel','channel':'" + channel + "', 'binary': 'true'}"
 			connector.send(str(event))
 
+		futureTypes = [ "this_week", "next_week", "quarter" ]
+		for futureType in futureTypes: 
+			btcChannel = "ok_sub_futureusd_btc_ticker_" + futureType
+			btcEvent = "{'event':'addChannel','channel':'" + btcChannel + "', 'binary': 'true'}"
+			ltcChannel = "ok_sub_futureusd_ltc_ticker_" + futureType
+			ltcEvent = "{'event':'addChannel','channel':'" + ltcChannel + "', 'binary': 'true'}"
 		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
@@ -183,6 +189,10 @@ class Okcoin():
 		return self.tickerMapping
 
 
+	def getFuturesMapping(self): 
+# 		ok_sub_futureusd_X_ticker_Y Subscribe Contract Market Price
+# websocket.send("{'event':'addChannel','channel':'ok_sub_futureusd_X_ticker_Y'}");
+		# value of Y is: 
 	def getKlineMapping(self): 
 		self.klineMapping = {
 			"okcoin": {
