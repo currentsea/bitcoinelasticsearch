@@ -12,7 +12,7 @@ DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
 # DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
 DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
-DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades"]
+DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_futures"]
 TIMEZONE = pytz.timezone('UTC')
 
 class Okcoin(): 
@@ -45,6 +45,9 @@ class Okcoin():
 			self.es.indices.put_mapping(index="live_crypto_orderbooks", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
 			self.es.indices.put_mapping(index="live_crypto_trades", doc_type=DEFAULT_DOCTYPE_NAME, body=self.completedTradeMapping)
 			self.es.indices.put_mapping(index="live_crypto_tickers", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
+			klineMapping = self.getKlineMapping()
+			self.es.indices.put_mapping(index="live_crypto_futures", doc_type=DEFAULT_DOCTYPE_NAME, body=klineMapping)
+
 		except:
 			raise
 
@@ -82,9 +85,10 @@ class Okcoin():
 		# self.klineList = klineList
 		# print(klineList)
 		channels = ['ok_sub_spotusd_btc_kline_1min', 'ok_sub_spotusd_ltc_kline_1min', 'ok_sub_spotusd_btc_kline_3min', 'ok_sub_spotusd_ltc_kline_3min', 'ok_sub_spotusd_btc_kline_5min', 'ok_sub_spotusd_ltc_kline_5min', 'ok_sub_spotusd_btc_kline_15min', 'ok_sub_spotusd_ltc_kline_15min', 'ok_sub_spotusd_btc_kline_30min', 'ok_sub_spotusd_ltc_kline_30min', 'ok_sub_spotusd_btc_kline_1hour', 'ok_sub_spotusd_ltc_kline_1hour', 'ok_sub_spotusd_btc_kline_2hour', 'ok_sub_spotusd_ltc_kline_2hour', 'ok_sub_spotusd_btc_kline_4hour', 'ok_sub_spotusd_ltc_kline_4hour', 'ok_sub_spotusd_btc_kline_6hour', 'ok_sub_spotusd_ltc_kline_6hour', 'ok_sub_spotusd_btc_kline_12hour', 'ok_sub_spotusd_ltc_kline_12hour', 'ok_sub_spotusd_btc_kline_day', 'ok_sub_spotusd_ltc_kline_day', 'ok_sub_spotusd_btc_kline_3day', 'ok_sub_spotusd_ltc_kline_3day', 'ok_sub_spotusd_btc_kline_week', 'ok_sub_spotusd_ltc_kline_week']
+		self.channels = channels
 		for channel in channels: 
 			event = "{'event':'addChannel','channel':'" + channel + "', 'binary': 'true'}"
-			connector.send(event)
+			connector.send(str(event))
 
 		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
@@ -176,6 +180,72 @@ class Okcoin():
 			}
 		}
 		return self.tickerMapping
+
+
+	def getKlineMapping(self): 
+		self.klineMapping = {
+			"okcoin": {
+				"properties": {
+					"uuid": { "type": "string", "index": "no"},
+					"date": {"type": "date"},
+					"timestamp": {"type": "string", "index": "no"},
+					"open_price": {"type": "float"},
+					"highest_price": {"type": "float"},
+					"lowest_price": {"type": "float"},
+					"close_price": {"type": "float"},
+					"volume": {"type": "float"},
+					"currency_symbol": {"type": "string"}, 
+					"contract_type": {"type": "string"}
+				}
+			}
+		}
+		return self.klineMapping
+
+	def getKline(self, dataSet, channelName): 
+		futureDto = {}
+		uniqueId = uuid.uuid4()
+		futureDto["uuid"] = str(uniqueId) 
+		recordDate = datetime.datetime.now(TIMEZONE)
+		futureDto["date"] = recordDate
+
+		if type(dataSet) is list: 
+			# [time, open_price, highest_price, lowest_price, close_price, volume]
+			futureRegex = re.search("ok_sub_spotusd_(b|l)tc_kline_(.+)", channelName)
+			futureType = futureRegex.group(2)
+			currencySymbol = futureRegex.group(1)
+			futureDto["timestamp"] = str(dataSet[0])
+			futureDto["open_price"] = float(dataSet[1])
+			futureDto["highest_price"] = float(dataSet[2])
+			futureDto["lowest_price"] = float(dataSet[3])
+			futureDto["close_price"] = float(dataSet[4])
+
+			theVol = str(dataSet[5])
+			theVol = theVol.replace(",", "")
+			theVolFloat = float(theVol)
+
+			futureDto["volume"] = float(theVolFloat)
+			pair = currencySymbol.upper() + "TCUSD"
+			futureDto["currency_symbol"] = str(pair)
+			futureDto["contract_type"] = str(futureType)
+		else: 
+			print (dataSet)
+			# print (dataSet)
+			# for jsonData in dataSet: 
+			# 	futureData = jsonData["data"] 
+
+			# 	# {'vol': '696068.00', 'high': 471.64, 'contractId': '20160325012', 'low': 461.74, 'buy': 464.68, 'last': '464.68', 'hold_amount': 235764, 'unitAmount': 100, 'sell': 464.76}
+
+			# 	futureDto["volume"] = float(futureData["vol"])
+			# 	futureDto["high"] = float(futureData["high"]) 
+			# 	futureDto["contract_id"] = str(futureData["contractId"]) 
+			# 	futureDto["low"] = float(futureData["low"]) 
+			# 	futureDto["buy"] = float(futureData["buy"]) 
+			# 	futureDto["last"] = float(futureData["last"]) 
+			# 	futureDto["hold_amount"] = float(futureData["hold_amount"]) 
+			# 	futureDto["unit_amount"] = float(futureData["unitAmount"]) 
+			# 	futureDto["sell"] = float(futureData["sell"]) 
+			# 	futureDto["currency_symbol"] = str(currencySymbol)
+		return futureDto 
 
 	def getTickerDto(self, dataSet, currencyPair): 
 		dto = {}
@@ -288,9 +358,11 @@ class Okcoin():
 	 			print (completedTradeDtoList)
 	 			for dto in completedTradeDtoList: 
 			 		self.postDto(dto, "live_crypto_trades")
-	 		elif curChannel in self.klineList: 
+	 		elif curChannel in self.channels: 
 	 			print ("WE IN DA KLINE LIST!")
-	 			print (curChannel)
+	 			theData = dataSet["data"]
+	 			dto = self.getKline(theData, curChannel)
+	 			self.postDto(dto, "live_crypto_futures")
 		pass
 
 	def getJsonData(self, okcoinData): 
