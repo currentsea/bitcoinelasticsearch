@@ -9,10 +9,10 @@ import os, websocket, time, datetime, sys, json, hashlib, zlib, base64, json, re
 DEFAULT_DOCTYPE_NAME = "okcoin"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
 DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
-DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
-# DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
+# DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
+DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
 TIMEZONE = pytz.timezone("UTC")
-DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_candlesticks"]
+DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_candlesticks", "live_crypto_futures_contracts"]
 TIMEZONE = pytz.timezone('UTC')
 
 class Okcoin(): 
@@ -24,6 +24,8 @@ class Okcoin():
 		self.getTickerMapping()
 		self.getCompletedTradesMapping()
 		self.getOrderbookElasticsearchMapping()
+		self.getKlineMapping()
+		self.getFutureTickerMapping()
 		self.createMappings()
 		
 	def run(self): 
@@ -46,8 +48,8 @@ class Okcoin():
 			self.es.indices.put_mapping(index="live_crypto_trades", doc_type=DEFAULT_DOCTYPE_NAME, body=self.completedTradeMapping)
 			self.es.indices.put_mapping(index="live_crypto_tickers", doc_type=DEFAULT_DOCTYPE_NAME, body=self.orderbookMapping)
 			klineMapping = self.getKlineMapping()
-			self.es.indices.put_mapping(index="live_crypto_candlesticks", doc_type=DEFAULT_DOCTYPE_NAME, body=klineMapping)
-
+			self.es.indices.put_mapping(index="live_crypto_candlesticks", doc_type=DEFAULT_DOCTYPE_NAME, body=self.klineMapping)
+			self.es.indices.put_mapping(index="live_crypto_futures_contracts", doc_type=DEFAULT_DOCTYPE_NAME, body=self.futureMapping)
 		except:
 			raise
 
@@ -85,12 +87,27 @@ class Okcoin():
 		# 	klineList.append("ok_sub_spotusd_ltc_kline_" + klineType)
 		# self.klineList = klineList
 		# print(klineList)
-		channels = ['ok_sub_spotusd_btc_kline_1min', 'ok_sub_spotusd_ltc_kline_1min', 'ok_sub_spotusd_btc_kline_3min', 'ok_sub_spotusd_ltc_kline_3min', 'ok_sub_spotusd_btc_kline_5min', 'ok_sub_spotusd_ltc_kline_5min', 'ok_sub_spotusd_btc_kline_15min', 'ok_sub_spotusd_ltc_kline_15min', 'ok_sub_spotusd_btc_kline_30min', 'ok_sub_spotusd_ltc_kline_30min', 'ok_sub_spotusd_btc_kline_1hour', 'ok_sub_spotusd_ltc_kline_1hour', 'ok_sub_spotusd_btc_kline_2hour', 'ok_sub_spotusd_ltc_kline_2hour', 'ok_sub_spotusd_btc_kline_4hour', 'ok_sub_spotusd_ltc_kline_4hour', 'ok_sub_spotusd_btc_kline_6hour', 'ok_sub_spotusd_ltc_kline_6hour', 'ok_sub_spotusd_btc_kline_12hour', 'ok_sub_spotusd_ltc_kline_12hour', 'ok_sub_spotusd_btc_kline_day', 'ok_sub_spotusd_ltc_kline_day', 'ok_sub_spotusd_btc_kline_3day', 'ok_sub_spotusd_ltc_kline_3day', 'ok_sub_spotusd_btc_kline_week', 'ok_sub_spotusd_ltc_kline_week']
-		self.channels = channels
-		for channel in channels: 
+		klineChannels = ['ok_sub_spotusd_btc_kline_1min', 'ok_sub_spotusd_ltc_kline_1min', 'ok_sub_spotusd_btc_kline_3min', 'ok_sub_spotusd_ltc_kline_3min', 'ok_sub_spotusd_btc_kline_5min', 'ok_sub_spotusd_ltc_kline_5min', 'ok_sub_spotusd_btc_kline_15min', 'ok_sub_spotusd_ltc_kline_15min', 'ok_sub_spotusd_btc_kline_30min', 'ok_sub_spotusd_ltc_kline_30min', 'ok_sub_spotusd_btc_kline_1hour', 'ok_sub_spotusd_ltc_kline_1hour', 'ok_sub_spotusd_btc_kline_2hour', 'ok_sub_spotusd_ltc_kline_2hour', 'ok_sub_spotusd_btc_kline_4hour', 'ok_sub_spotusd_ltc_kline_4hour', 'ok_sub_spotusd_btc_kline_6hour', 'ok_sub_spotusd_ltc_kline_6hour', 'ok_sub_spotusd_btc_kline_12hour', 'ok_sub_spotusd_ltc_kline_12hour', 'ok_sub_spotusd_btc_kline_day', 'ok_sub_spotusd_ltc_kline_day', 'ok_sub_spotusd_btc_kline_3day', 'ok_sub_spotusd_ltc_kline_3day', 'ok_sub_spotusd_btc_kline_week', 'ok_sub_spotusd_ltc_kline_week']
+		self.klineChannels = klineChannels
+		for channel in self.klineChannels: 
 			event = "{'event':'addChannel','channel':'" + channel + "', 'binary': 'true'}"
 			connector.send(str(event))
 
+		self.futureTypes = [ "this_week", "next_week", "quarter" ]
+		
+		futureChannels = []
+		# fucking redudndant as mother fucking shit 
+		for futureType in self.futureTypes: 
+			btcChannel = "ok_sub_futureusd_btc_ticker_" + futureType
+			btcEvent = "{'event':'addChannel','channel':'" + btcChannel + "', 'binary': 'true'}"
+			ltcChannel = "ok_sub_futureusd_ltc_ticker_" + futureType
+			ltcEvent = "{'event':'addChannel','channel':'" + ltcChannel + "', 'binary': 'true'}"
+			connector.send(str(btcEvent))
+			connector.send(str(ltcEvent))
+			futureChannels.append(ltcChannel)
+			futureChannels.append(btcChannel)
+			print('SUBSCRIBED TO THE FUTURE')
+		self.futureChannels = futureChannels
 		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
@@ -183,6 +200,9 @@ class Okcoin():
 		return self.tickerMapping
 
 
+# 		ok_sub_futureusd_X_ticker_Y Subscribe Contract Market Price
+# websocket.send("{'event':'addChannel','channel':'ok_sub_futureusd_X_ticker_Y'}");
+		# value of Y is: 
 	def getKlineMapping(self): 
 		self.klineMapping = {
 			"okcoin": {
@@ -201,6 +221,27 @@ class Okcoin():
 			}
 		}
 		return self.klineMapping
+
+	def getFutureTickerMapping(self): 
+		self.futureMapping = { 
+			"okcoin" : { 
+				"properties": { 
+					"uuid": { "type": "string", "index": "no"},
+					"date": {"type": "date"},
+					"timestamp": {"type": "string", "index": "no"},	
+					"buy_price": {"type": "float"},
+					"high_price": {"type": "float"},
+					"last_price": {"type": "float"},
+					"low_price": {"type": "float"},
+					"sell_price": {"type": "float"},
+					"unit_amount": {"type": "float"},
+					"volume": {"type": "float"},
+					"contract_type": {"type": "string"},	
+					"contract_id": {"type": "string", "index": "no"}, 
+					"currency_pair": {"type": "string"}				}
+			}
+		} 
+		return self.futureMapping
 
 	def getKline(self, dataSet, channelName): 
 		futureDto = {}
@@ -359,12 +400,59 @@ class Okcoin():
 	 			print (completedTradeDtoList)
 	 			for dto in completedTradeDtoList: 
 			 		self.postDto(dto, "live_crypto_trades")
-	 		elif curChannel in self.channels: 
+	 		elif curChannel in self.klineChannels: 
 	 			print ("WE IN DA KLINE LIST!")
 	 			theData = dataSet["data"]
 	 			dto = self.getKline(theData, curChannel)
 	 			self.postDto(dto, "live_crypto_candlesticks")
+ 			elif curChannel in self.futureChannels: 
+ 				theData = dataSet["data"]
+ 				dto = self.getFutureTickerMappingDto(theData, curChannel) 
+ 				print ("CRYPTO FUTURES!!!!")
+ 				print(dto)
+ 				self.postDto(dto, "live_crypto_futures_contracts")
 		pass
+
+	def getFutureTickerMappingDto(self, data, channelName): 
+		print("\n\n\n\n\nOOOOOO\n\n---\n\n")
+		futureDto = {}
+		uniqueId = uuid.uuid4()
+		futureDto["uuid"] = str(uniqueId) 
+		recordDate = datetime.datetime.now(TIMEZONE)
+		futureRegex = re.search("ok_sub_futureusd_(b|l)tc_ticker_(.+)", channelName)
+		futureType = futureRegex.group(2)
+		currencySymbol = futureRegex.group(1)
+		futureDto["date"] = recordDate
+		futureDto["buy_price"] = float(data["buy"])
+		futureDto["contract_id"] = str(data["contractId"])
+		futureDto["high_price"] = float(data["high"])
+		futureDto["last_price"] = float(data["last"])
+		futureDto["low_price"] = float(data["low"])
+		futureDto["sell_price"] = float(data["sell"])
+		futureDto["unit_amount"] = float(data["unitAmount"])
+		futureDto["volume"] = float(data["vol"])
+
+		# HACKY AS FUCK but im tired so fuck off
+		currencyPairType = currencySymbol.upper() + "TCUSD"
+		futureDto["currency_pair"] = str(currencyPairType)
+		futureDto["contract_type"] = str(futureType)
+		return futureDto
+
+
+		# [{
+#     "channel":"ok_sub_futureusd_btc_ticker_this_week",
+#     "data":{
+#         "buy":396.93,
+#         "contractId":20141003011,
+#         "high":405.35,
+#         "last":397.2,
+#         "low":392.73,
+#         "sell":397.6,
+#         "unitAmount":100,
+#         "volume":119769
+#     }
+# }]
+		
 
 	def getJsonData(self, okcoinData): 
 		tempData = okcoinData
