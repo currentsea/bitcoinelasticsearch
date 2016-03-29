@@ -75,11 +75,13 @@ class BitfinexPrivate:
 			# encodedData.encode('utf-8') 
 
 			signature = hashDigest.hexdigest()
+
+			payload = hashDigest.update(theNonceStr.encode('utf-8'))
 			reqBody = { 
 				"event": "auth", 
 				"apiKey": str(self.apiKey), 
 				"authSig": str(signature), 
-			    "authPayload": str(hashDigest)
+			    "authPayload": str(payload)
 			}
 			# authJson = json.dumps(reqBody)
 			self.ws.send(json.dumps(reqBody))

@@ -28,8 +28,7 @@ class Okcoin():
 		
 	def run(self): 
 		websocket.enableTrace(False)
-		ws = websocket.WebSocketApp(self.wsUrl, on_message = self.websocketMessage, on_error = self.websocketError, on_close = self.websocketClose)
-		ws.on_open = self.subscribePublicChannels
+		ws = websocket.WebSocketApp(self.wsUrl, on_message = self.websocketMessage, on_error = self.websocketError, on_close = self.websocketClose, on_open = self.subscribePublicChannels)
 		ws.run_forever()
 
 	def createIndices(self, indecesList=DEFAULT_INDECES):
@@ -63,12 +62,29 @@ class Okcoin():
 			raise		
 
 	def subscribePublicChannels(self, connector):
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
-		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_ticker','binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_ticker','binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_depth_60', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
+		# ok_sub_spotusd_btc_kline_week
+				# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
+
+		# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
+			# websocket.send("{'event':'addChannel','channel':'ok_sub_spotusd_X_kline_Y'}");
+		# klineList = []
+		# klineTypes = ['1min', '3min', '5min', '15min', '30min', '1hour', '2hour', '4hour', '6hour', '12hour', 'day', '3day', 'week']
+		# for klineType in klineTypes: 
+		# 	connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_kline_'" + klineType + "', 'binary':'true'}");
+		# 	klineList.append("ok_sub_spotusd_btc_kline_" + klineType)
+		# 	connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_kline_'" + klineType + "', 'binary':'true'}");
+		# 	klineList.append("ok_sub_spotusd_ltc_kline_" + klineType)
+		# self.klineList = klineList
+		# print(klineList)
+		channels = ['ok_sub_spotusd_btc_kline_1min', 'ok_sub_spotusd_ltc_kline_1min', 'ok_sub_spotusd_btc_kline_3min', 'ok_sub_spotusd_ltc_kline_3min', 'ok_sub_spotusd_btc_kline_5min', 'ok_sub_spotusd_ltc_kline_5min', 'ok_sub_spotusd_btc_kline_15min', 'ok_sub_spotusd_ltc_kline_15min', 'ok_sub_spotusd_btc_kline_30min', 'ok_sub_spotusd_ltc_kline_30min', 'ok_sub_spotusd_btc_kline_1hour', 'ok_sub_spotusd_ltc_kline_1hour', 'ok_sub_spotusd_btc_kline_2hour', 'ok_sub_spotusd_ltc_kline_2hour', 'ok_sub_spotusd_btc_kline_4hour', 'ok_sub_spotusd_ltc_kline_4hour', 'ok_sub_spotusd_btc_kline_6hour', 'ok_sub_spotusd_ltc_kline_6hour', 'ok_sub_spotusd_btc_kline_12hour', 'ok_sub_spotusd_ltc_kline_12hour', 'ok_sub_spotusd_btc_kline_day', 'ok_sub_spotusd_ltc_kline_day', 'ok_sub_spotusd_btc_kline_3day', 'ok_sub_spotusd_ltc_kline_3day', 'ok_sub_spotusd_btc_kline_week', 'ok_sub_spotusd_ltc_kline_week']
+		for channel in channels: 
+			event = "{'event':'addChannel','channel':'" + channel + "', 'binary': 'true'}"
+			connector.send(event)
 
 		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
@@ -247,6 +263,7 @@ class Okcoin():
 		jsonData = self.getJsonData(okcoinData)
 		for dataSet in jsonData: 
 		 	curChannel = dataSet["channel"]
+		 	print (curChannel)
 		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
 		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
 		 		self.postDto(dto, "live_crypto_tickers")
@@ -271,6 +288,9 @@ class Okcoin():
 	 			print (completedTradeDtoList)
 	 			for dto in completedTradeDtoList: 
 			 		self.postDto(dto, "live_crypto_trades")
+	 		elif curChannel in self.klineList: 
+	 			print ("WE IN DA KLINE LIST!")
+	 			print (curChannel)
 		pass
 
 	def getJsonData(self, okcoinData): 
