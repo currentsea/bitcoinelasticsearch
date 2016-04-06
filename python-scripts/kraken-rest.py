@@ -8,8 +8,8 @@ from time import sleep
 TIMEZONE = pytz.timezone('UTC')
 KRAKEN_API_HOST = "https://api.kraken.com"
 ELASTICSEARCH_HOST = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com"
-DEFAULT_INDEX = "crypto_orderbooks"
-DEFAULT_DOC_TYPE = "kraken_ethereum"
+DEFAULT_INDEX = "live_crypto_orderbooks"
+DEFAULT_DOC_TYPE = "kraken"
 SLEEP_INTERVAL = 7.5
 def getArgs(): 
 	parser = argparse.ArgumentParser(description='BTC elastic search data collector')
