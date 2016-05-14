@@ -39,10 +39,10 @@ import elasticsearch
 from websocket import create_connection
 
 DEFAULT_DOCTYPE_NAME = "bitfinex"
-DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
+DEFAULT_INDEX_NAME = "live_orderbooks"
 DEFAULT_API_URL = "https://api.bitfinex.com/v1"
 DEFAULT_WEBSOCKETS_URL = "wss://api2.bitfinex.com:3000/ws"
-DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200"
+DEFAULT_ELASTICSEARCH_URL = "https://es.btcdata.org:9200"
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades"]
 
