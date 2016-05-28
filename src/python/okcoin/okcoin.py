@@ -74,19 +74,19 @@ class Okcoin():
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}")
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
 
-		# ok_sub_spotusd_btc_kline_week
-				# connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
+		ok_sub_spotusd_btc_kline_week
+		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
 
-			# websocket.send("{'event':'addChannel','channel':'ok_sub_spotusd_X_kline_Y'}");
-		# klineList = []
-		# klineTypes = ['1min', '3min', '5min', '15min', '30min', '1hour', '2hour', '4hour', '6hour', '12hour', 'day', '3day', 'week']
-		# for klineType in klineTypes: 
-		# 	connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_kline_'" + klineType + "', 'binary':'true'}");
-		# 	klineList.append("ok_sub_spotusd_btc_kline_" + klineType)
-		# 	connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_kline_'" + klineType + "', 'binary':'true'}");
-		# 	klineList.append("ok_sub_spotusd_ltc_kline_" + klineType)
-		# self.klineList = klineList
-		# print(klineList)
+		websocket.send("{'event':'addChannel','channel':'ok_sub_spotusd_X_kline_Y'}");
+		klineList = []
+		klineTypes = ['1min', '3min', '5min', '15min', '30min', '1hour', '2hour', '4hour', '6hour', '12hour', 'day', '3day', 'week']
+		for klineType in klineTypes: 
+			connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_kline_'" + klineType + "', 'binary':'true'}");
+			klineList.append("ok_sub_spotusd_btc_kline_" + klineType)
+			connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_kline_'" + klineType + "', 'binary':'true'}");
+			klineList.append("ok_sub_spotusd_ltc_kline_" + klineType)
+		self.klineList = klineList
+		print(klineList)
 		klineChannels = ['ok_sub_spotusd_btc_kline_1min', 'ok_sub_spotusd_ltc_kline_1min', 'ok_sub_spotusd_btc_kline_3min', 'ok_sub_spotusd_ltc_kline_3min', 'ok_sub_spotusd_btc_kline_5min', 'ok_sub_spotusd_ltc_kline_5min', 'ok_sub_spotusd_btc_kline_15min', 'ok_sub_spotusd_ltc_kline_15min', 'ok_sub_spotusd_btc_kline_30min', 'ok_sub_spotusd_ltc_kline_30min', 'ok_sub_spotusd_btc_kline_1hour', 'ok_sub_spotusd_ltc_kline_1hour', 'ok_sub_spotusd_btc_kline_2hour', 'ok_sub_spotusd_ltc_kline_2hour', 'ok_sub_spotusd_btc_kline_4hour', 'ok_sub_spotusd_ltc_kline_4hour', 'ok_sub_spotusd_btc_kline_6hour', 'ok_sub_spotusd_ltc_kline_6hour', 'ok_sub_spotusd_btc_kline_12hour', 'ok_sub_spotusd_ltc_kline_12hour', 'ok_sub_spotusd_btc_kline_day', 'ok_sub_spotusd_ltc_kline_day', 'ok_sub_spotusd_btc_kline_3day', 'ok_sub_spotusd_ltc_kline_3day', 'ok_sub_spotusd_btc_kline_week', 'ok_sub_spotusd_ltc_kline_week']
 		self.klineChannels = klineChannels
 		for channel in self.klineChannels: 
@@ -108,24 +108,24 @@ class Okcoin():
 			futureChannels.append(btcChannel)
 			print('SUBSCRIBED TO THE FUTURE')
 		self.futureChannels = futureChannels
-		# connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
-		# connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
-		# connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_5min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_15min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_30min', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_2hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_4hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_6hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_12hour', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
+		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
 
 	def inflate(self, okcoinData):
 	    decompressedData = zlib.decompressobj(-zlib.MAX_WBITS)
@@ -437,21 +437,6 @@ class Okcoin():
 		futureDto["currency_pair"] = str(currencyPairType)
 		futureDto["contract_type"] = str(futureType)
 		return futureDto
-
-
-		# [{
-#     "channel":"ok_sub_futureusd_btc_ticker_this_week",
-#     "data":{
-#         "buy":396.93,
-#         "contractId":20141003011,
-#         "high":405.35,
-#         "last":397.2,
-#         "low":392.73,
-#         "sell":397.6,
-#         "unitAmount":100,
-#         "volume":119769
-#     }
-# }]
 		
 
 	def getJsonData(self, okcoinData): 
