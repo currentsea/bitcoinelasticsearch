@@ -257,42 +257,47 @@ class Okcoin():
 		futureDto["date"] = recordDate
 
 		if type(dataSet) is list: 
-			# [time, open_price, highest_price, lowest_price, close_price, volume]
-			futureRegex = re.search("ok_sub_spotusd_(b|l)tc_kline_(.+)", channelName)
-			futureType = futureRegex.group(2)
-			currencySymbol = futureRegex.group(1)
-			futureDto["timestamp"] = str(dataSet[0])
-			futureDto["open_price"] = float(dataSet[1])
-			futureDto["highest_price"] = float(dataSet[2])
-			futureDto["lowest_price"] = float(dataSet[3])
-			futureDto["close_price"] = float(dataSet[4])
+			try: 
+				# [time, open_price, highest_price, lowest_price, close_price, volume]
+				futureRegex = re.search("ok_sub_spotusd_(b|l)tc_kline_(.+)", channelName)
+				futureType = futureRegex.group(2)
+				currencySymbol = futureRegex.group(1)
+				futureDto["timestamp"] = str(dataSet[0])
+				futureDto["open_price"] = float(dataSet[1])
+				futureDto["highest_price"] = float(dataSet[2])
+				futureDto["lowest_price"] = float(dataSet[3])
+				futureDto["close_price"] = float(dataSet[4])
 
-			theVol = str(dataSet[5])
-			theVol = theVol.replace(",", "")
-			theVolFloat = float(theVol)
+				theVol = str(dataSet[5])
+				theVol = theVol.replace(",", "")
+				theVolFloat = float(theVol)
 
-			futureDto["volume"] = float(theVolFloat)
-			pair = currencySymbol.upper() + "TCUSD"
-			futureDto["currency_symbol"] = str(pair)
-			futureDto["contract_type"] = str(futureType)
+				futureDto["volume"] = float(theVolFloat)
+				pair = currencySymbol.upper() + "TCUSD"
+				futureDto["currency_symbol"] = str(pair)
+				futureDto["contract_type"] = str(futureType)
+			except: 
+				pass
 		else: 
 			print (dataSet)
-			# print (dataSet)
-			# for jsonData in dataSet: 
-			# 	futureData = jsonData["data"] 
+			try: 
+				for jsonData in dataSet: 
+					futureData = jsonData["data"] 
 
-			# 	# {'vol': '696068.00', 'high': 471.64, 'contractId': '20160325012', 'low': 461.74, 'buy': 464.68, 'last': '464.68', 'hold_amount': 235764, 'unitAmount': 100, 'sell': 464.76}
+					# {'vol': '696068.00', 'high': 471.64, 'contractId': '20160325012', 'low': 461.74, 'buy': 464.68, 'last': '464.68', 'hold_amount': 235764, 'unitAmount': 100, 'sell': 464.76}
 
-			# 	futureDto["volume"] = float(futureData["vol"])
-			# 	futureDto["high"] = float(futureData["high"]) 
-			# 	futureDto["contract_id"] = str(futureData["contractId"]) 
-			# 	futureDto["low"] = float(futureData["low"]) 
-			# 	futureDto["buy"] = float(futureData["buy"]) 
-			# 	futureDto["last"] = float(futureData["last"]) 
-			# 	futureDto["hold_amount"] = float(futureData["hold_amount"]) 
-			# 	futureDto["unit_amount"] = float(futureData["unitAmount"]) 
-			# 	futureDto["sell"] = float(futureData["sell"]) 
-			# 	futureDto["currency_symbol"] = str(currencySymbol)
+					futureDto["volume"] = float(futureData["vol"])
+					futureDto["high"] = float(futureData["high"]) 
+					futureDto["contract_id"] = str(futureData["contractId"]) 
+					futureDto["low"] = float(futureData["low"]) 
+					futureDto["buy"] = float(futureData["buy"]) 
+					futureDto["last"] = float(futureData["last"]) 
+					futureDto["hold_amount"] = float(futureData["hold_amount"]) 
+					futureDto["unit_amount"] = float(futureData["unitAmount"]) 
+					futureDto["sell"] = float(futureData["sell"]) 
+					futureDto["currency_symbol"] = str(currencySymbol)
+			except: 
+				pass 
 		return futureDto 
 
 	def getTickerDto(self, dataSet, currencyPair): 
@@ -379,44 +384,48 @@ class Okcoin():
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
 		jsonData = self.getJsonData(okcoinData)
-		for dataSet in jsonData: 
-		 	curChannel = dataSet["channel"]
-		 	print (curChannel)
-		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-		 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
-		 		self.postDto(dto, "live_crypto_tickers")
-	 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
-		 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
-		 		self.postDto(dto, "live_crypto_tickers")
-	 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
-	 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
-	 			for dto in dtoList: 
-			 		self.postDto(dto, "live_crypto_orderbooks")
- 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
-	 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
-	 			for dto in dtoList: 
-			 		self.postDto(dto, "live_crypto_orderbooks")
-	 		elif curChannel == "ok_sub_spotusd_btc_trades": 
-	 			print ('A TRADE')
-	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
-	 			for dto in completedTradeDtoList: 
-			 		self.postDto(dto, "live_crypto_trades")
- 			elif curChannel == "ok_sub_spotusd_ltc_trades": 
-	 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
-	 			print (completedTradeDtoList)
-	 			for dto in completedTradeDtoList: 
-			 		self.postDto(dto, "live_crypto_trades")
-	 		elif curChannel in self.klineChannels: 
-	 			print ("WE IN DA KLINE LIST!")
-	 			theData = dataSet["data"]
-	 			dto = self.getKline(theData, curChannel)
-	 			self.postDto(dto, "live_crypto_candlesticks")
- 			elif curChannel in self.futureChannels: 
- 				theData = dataSet["data"]
- 				dto = self.getFutureTickerMappingDto(theData, curChannel) 
- 				print ("CRYPTO FUTURES!!!!")
- 				print(dto)
- 				self.postDto(dto, "live_crypto_futures_contracts")
+		try: 
+			for dataSet in jsonData: 
+			 	curChannel = dataSet["channel"]
+			 	print (curChannel)
+			 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
+			 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
+			 		self.postDto(dto, "live_crypto_tickers")
+		 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
+			 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
+			 		self.postDto(dto, "live_crypto_tickers")
+		 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
+		 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+		 			for dto in dtoList: 
+				 		self.postDto(dto, "live_crypto_orderbooks")
+	 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
+		 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+		 			for dto in dtoList: 
+				 		self.postDto(dto, "live_crypto_orderbooks")
+		 		elif curChannel == "ok_sub_spotusd_btc_trades": 
+		 			print ('A TRADE')
+		 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
+		 			for dto in completedTradeDtoList: 
+				 		self.postDto(dto, "live_crypto_trades")
+	 			elif curChannel == "ok_sub_spotusd_ltc_trades": 
+		 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
+		 			print (completedTradeDtoList)
+		 			for dto in completedTradeDtoList: 
+				 		self.postDto(dto, "live_crypto_trades")
+		 		elif curChannel in self.klineChannels: 
+		 			print ("WE IN DA KLINE LIST!")
+		 			theData = dataSet["data"]
+		 			dto = self.getKline(theData, curChannel)
+		 			self.postDto(dto, "live_crypto_candlesticks")
+	 			elif curChannel in self.futureChannels: 
+	 				theData = dataSet["data"]
+	 				dto = self.getFutureTickerMappingDto(theData, curChannel) 
+	 				print ("CRYPTO FUTURES!!!!")
+	 				print(dto)
+	 				self.postDto(dto, "live_crypto_futures_contracts")
+			except: 
+				print ("Some funny business happened in the " + str(curChannel) + " channel") 
+				pass 
 		pass
 
 	def getFutureTickerMappingDto(self, data, channelName): 
