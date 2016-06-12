@@ -126,6 +126,12 @@ class Okcoin():
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_this_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_next_week', 'binary': 'true'}") 
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_quarter', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_this_week', 'binary': 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_next_week', 'binary': 'true'}") 
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_quarter', 'binary': 'true'}")
 
 	def inflate(self, okcoinData):
 	    decompressedData = zlib.decompressobj(-zlib.MAX_WBITS)
