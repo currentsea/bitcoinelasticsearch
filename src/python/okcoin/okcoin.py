@@ -384,48 +384,47 @@ class Okcoin():
 	def websocketMessage(self, connection, event):
 		okcoinData = self.inflate(event) #data decompress
 		jsonData = self.getJsonData(okcoinData)
-		try: 
-			for dataSet in jsonData: 
-			 	curChannel = dataSet["channel"]
-			 	print (curChannel)
-			 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
-			 		dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
-			 		self.postDto(dto, "live_crypto_tickers")
-		 		elif curChannel == "ok_sub_spotusd_ltc_ticker": 
-			 		dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
-			 		self.postDto(dto, "live_crypto_tickers")
-		 		elif curChannel == "ok_sub_spotusd_btc_depth_60": 
-		 			dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
-		 			for dto in dtoList: 
-				 		self.postDto(dto, "live_crypto_orderbooks")
-	 			elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
-		 			dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
-		 			for dto in dtoList: 
-				 		self.postDto(dto, "live_crypto_orderbooks")
-		 		elif curChannel == "ok_sub_spotusd_btc_trades": 
-		 			print ('A TRADE')
-		 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
-		 			for dto in completedTradeDtoList: 
-				 		self.postDto(dto, "live_crypto_trades")
-	 			elif curChannel == "ok_sub_spotusd_ltc_trades": 
-		 			completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
-		 			print (completedTradeDtoList)
-		 			for dto in completedTradeDtoList: 
-				 		self.postDto(dto, "live_crypto_trades")
-		 		elif curChannel in self.klineChannels: 
-		 			print ("WE IN DA KLINE LIST!")
-		 			theData = dataSet["data"]
-		 			dto = self.getKline(theData, curChannel)
-		 			self.postDto(dto, "live_crypto_candlesticks")
-	 			elif curChannel in self.futureChannels: 
-	 				theData = dataSet["data"]
-	 				dto = self.getFutureTickerMappingDto(theData, curChannel) 
-	 				print ("CRYPTO FUTURES!!!!")
-	 				print(dto)
-	 				self.postDto(dto, "live_crypto_futures_contracts")
-			except: 
-				print ("Some funny business happened in the " + str(curChannel) + " channel") 
-				pass 
+		for dataSet in jsonData: 
+			try: 
+				curChannel = dataSet["channel"]
+				print (curChannel)
+				if curChannel ==  "ok_sub_spotusd_btc_ticker": 
+					dto = self.getTickerDto(dataSet["data"], "BTCUSD") 
+					self.postDto(dto, "live_crypto_tickers")
+				elif curChannel == "ok_sub_spotusd_ltc_ticker": 
+					dto = self.getTickerDto(dataSet["data"],  "LTCUSD")
+					self.postDto(dto, "live_crypto_tickers")
+				elif curChannel == "ok_sub_spotusd_btc_depth_60": 
+					dtoList = self.getDepthDtoList(dataSet["data"], "BTCUSD")
+					for dto in dtoList: 
+						self.postDto(dto, "live_crypto_orderbooks")
+				elif curChannel == "ok_sub_spotusd_ltc_depth_60": 
+					dtoList = self.getDepthDtoList(dataSet["data"], "LTCUSD")
+					for dto in dtoList: 
+						self.postDto(dto, "live_crypto_orderbooks")
+				elif curChannel == "ok_sub_spotusd_btc_trades": 
+					print ('A TRADE')
+					completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "BTCUSD")
+					for dto in completedTradeDtoList: 
+						self.postDto(dto, "live_crypto_trades")
+				elif curChannel == "ok_sub_spotusd_ltc_trades": 
+					completedTradeDtoList = self.getCompletedTradeDtoList(dataSet["data"], "LTCUSD")
+					print (completedTradeDtoList)
+					for dto in completedTradeDtoList: 
+						self.postDto(dto, "live_crypto_trades")
+				elif curChannel in self.klineChannels: 
+					print ("WE IN DA KLINE LIST!")
+					theData = dataSet["data"]
+					dto = self.getKline(theData, curChannel)
+					self.postDto(dto, "live_crypto_candlesticks")
+				elif curChannel in self.futureChannels: 
+					theData = dataSet["data"]
+					dto = self.getFutureTickerMappingDto(theData, curChannel) 
+					print ("CRYPTO FUTURES!!!!")
+					print(dto)
+					self.postDto(dto, "live_crypto_futures_contracts")
+			except:
+				pass
 		pass
 
 	def getFutureTickerMappingDto(self, data, channelName): 
