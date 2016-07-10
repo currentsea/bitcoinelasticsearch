@@ -475,7 +475,6 @@ class Okcoin():
 		okcoinData = self.inflate(event) #data decompress
 		jsonData = self.getJsonData(okcoinData)
 		for dataSet in jsonData: 
-<<<<<<< HEAD
 		 	curChannel = dataSet["channel"]
 		 	print (curChannel)
 		 	if curChannel ==  "ok_sub_spotusd_btc_ticker": 
