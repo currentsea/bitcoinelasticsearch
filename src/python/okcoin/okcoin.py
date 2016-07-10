@@ -10,7 +10,8 @@ DEFAULT_DOCTYPE_NAME = "okcoin"
 DEFAULT_INDEX_NAME = "live_crypto_orderbooks"
 DEFAULT_WEBSOCKETS_URL = "wss://real.okcoin.com:10440/websocket/okcoinapi"
 # DEFAULT_ELASTICSEARCH_URL = "https://search-bitcoins-2sfk7jzreyq3cfjwvia2mj7d4m.us-west-2.es.amazonaws.com" 
-DEFAULT_ELASTICSEARCH_URL = "http://es.btcdata.org:9200"
+#DEFAULT_ELASTICSEARCH_URL = "https://search-btc-staging-temp-r4fnlxi76bsx3mhonfyxrawr3y.us-west-2.es.amazonaws.com"
+DEFAULT_ELASTICSEARCH_URL = "https://es1.btcdream.ws:9200" 
 TIMEZONE = pytz.timezone("UTC")
 DEFAULT_INDECES = ["live_crypto_orderbooks", "live_crypto_tickers", "live_crypto_trades", "live_crypto_candlesticks", "live_crypto_futures_contracts"]
 TIMEZONE = pytz.timezone('UTC')
@@ -62,7 +63,7 @@ class Okcoin():
 
 	def connectElasticsearch(self):
 		try:
-			self.es = elasticsearch.Elasticsearch([self.esUrl])
+			self.es = elasticsearch.Elasticsearch([self.esUrl], verify_ssl=True)
 		except:
 			raise		
 
@@ -73,8 +74,6 @@ class Okcoin():
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_depth_60', 'binary': 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}")
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_ltc_trades'}");
-
-		ok_sub_spotusd_btc_kline_week
 		connector.send("{'event':'addChannel','channel':'ok_sub_spotusd_btc_trades'}");
 
 		websocket.send("{'event':'addChannel','channel':'ok_sub_spotusd_X_kline_Y'}");
@@ -97,6 +96,7 @@ class Okcoin():
 		
 		futureChannels = []
 		# fucking redudndant as mother fucking shit 
+
 		for futureType in self.futureTypes: 
 			btcChannel = "ok_sub_futureusd_btc_ticker_" + futureType
 			btcEvent = "{'event':'addChannel','channel':'" + btcChannel + "', 'binary': 'true'}"
@@ -107,7 +107,29 @@ class Okcoin():
 			futureChannels.append(ltcChannel)
 			futureChannels.append(btcChannel)
 			print('SUBSCRIBED TO THE FUTURE')
+		
+		# futureChannels.append("ok_btcusd_future_ticker_this_week")
+		# futureChannels.append("ok_btcusd_future_ticker_next_week")
+		# futureChannels.append("ok_btcusd_future_ticker_quarter")
+		# futureChannels.append("ok_btcusd_future_index")
+		# futureChannels.append("ok_sub_futureusd_btc_trade_this_week")
+		# futureChannels.append("ok_sub_futureusd_btc_trade_next_week") 
+		# futureChannels.append("ok_sub_futureusd_btc_trade_quarter")
+		# futureChannels.append("ok_sub_futureusd_ltc_trade_this_week")
+		# futureChannels.append("ok_sub_futureusd_ltc_trade_next_week") 
+		# futureChannels.append("ok_sub_futureusd_ltc_trade_quarter")
 		self.futureChannels = futureChannels
+
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_this_week', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_next_week', 'binary' : 'true'}") 
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_quarter', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_this_week', 'binary' : 'true'}")
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_next_week', 'binary' : 'true'}") 
+		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_quarter', 'binary' : 'true'}")
 		connector.send("{'event':'addChannel','channel':'ok_btcusd_trades_v1', 'binary': 'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_1min', 'binary':'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3min', 'binary':'true'}")
@@ -122,16 +144,7 @@ class Okcoin():
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_day', 'binary':'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_3day', 'binary':'true'}")
 		connector.send("{'event':'addChannel', 'channel': 'ok_btcusd_kline_week', 'binary':'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_this_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_next_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_ticker_quarter', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_btcusd_future_index', 'binary':'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_this_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_next_week', 'binary': 'true'}") 
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_btc_trade_quarter', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_this_week', 'binary': 'true'}")
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_next_week', 'binary': 'true'}") 
-		connector.send("{'event':'addChannel','channel':'ok_sub_futureusd_ltc_trade_quarter', 'binary': 'true'}")
+
 
 	def inflate(self, okcoinData):
 	    decompressedData = zlib.decompressobj(-zlib.MAX_WBITS)
@@ -139,7 +152,7 @@ class Okcoin():
 	    inflatedData += decompressedData.flush()
 	    return inflatedData
 
-	def websocketError(self, event):
+	def websocketError(self, event, data):
 		print('ERROR IS: ') 
 		print (event)
 
@@ -244,7 +257,8 @@ class Okcoin():
 					"volume": {"type": "float"},
 					"contract_type": {"type": "string"},	
 					"contract_id": {"type": "string", "index": "no"}, 
-					"currency_pair": {"type": "string"}				}
+					"currency_pair": {"type": "string"}				
+				}
 			}
 		} 
 		return self.futureMapping
@@ -418,11 +432,13 @@ class Okcoin():
 					dto = self.getKline(theData, curChannel)
 					self.postDto(dto, "live_crypto_candlesticks")
 				elif curChannel in self.futureChannels: 
+					print ("WE ARE IN A FUTURE CHANNEL!")
 					theData = dataSet["data"]
 					dto = self.getFutureTickerMappingDto(theData, curChannel) 
 					print ("CRYPTO FUTURES!!!!")
 					print(dto)
 					self.postDto(dto, "live_crypto_futures_contracts")
+
 			except:
 				pass
 		pass
