@@ -1,6 +1,6 @@
 # PLEASE DONATE TO KEEP PROJECT ALIVE
 
-### DONATION ADDRESS: 17KQ18EUvdVL6xnWgiJDdN79pfc9n3MAmH
+### DONATION ADDRESS: 1EuST4VcM8LMzTXPfecdMDEJpAHXjTgHHU
 
 ```
 ### Your donations and tips are  appreciated! ### 
